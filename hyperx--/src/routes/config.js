@@ -1,5 +1,6 @@
+import AuthSignIn from '../page/auth/AuthSignIn';
+import AuthSignUp from '../page/auth/AuthSignUp';
 import Home from '../page/dashboard/DashboardPage';
-import AuthLogin from '../page/auth/AuthLogin';
 import NotFound from '../page/NotFound';
 
 const routes = [
@@ -9,13 +10,22 @@ const routes = [
         exact: true,
         name: "Trang Chủ",
     },
+
     {
-        path: "/login",
-        element: AuthLogin,
-        private: true,
-        name: "Bảng Điều Khiển",
+        path: "/signin",
+        element: AuthSignIn,
+        private: false,
+        name: "Đăng Nhập",
     },
 
+    {
+        path: "/signup",
+        element: AuthSignUp,
+        private: false,
+        name: "Đăng ký",
+    },
+
+    // Not found
     {
         path: "*",
         element: NotFound,

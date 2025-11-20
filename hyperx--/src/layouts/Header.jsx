@@ -1,6 +1,7 @@
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 
 
 const navigation = [
@@ -16,12 +17,12 @@ const Header = () => {
         <header className="absolute inset-x-0 top-0 z-50">
             <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
                 <div className="flex lg:flex-1">
-                    <a href="#" className="-m-1.5 p-1.5">
+                    <Link to="/" className="-m-1.5 p-1.5">
                         <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
                             HyperX
                         </span>
 
-                    </a>
+                    </Link>
                 </div>
                 <div className="flex lg:hidden">
                     <button
@@ -41,12 +42,12 @@ const Header = () => {
                     ))}
                 </div>
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                    <a href="#" className="text-sm/6 font-semibold text-white border-r mr-8 pr-8">
-                        Sign in
-                    </a>
-                    <a href="#" className="text-sm/6 font-semibold text-white">
-                        Log in <span aria-hidden="true">&rarr;</span>
-                    </a>
+                    <Link to="/signup" className="text-sm/6 font-semibold text-white border-r mr-8 pr-8">
+                        Sign up
+                    </Link>
+                    <Link to="/signin" className="text-sm/6 font-semibold text-white">
+                        Sign in <span aria-hidden="true">&rarr;</span>
+                    </Link>
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen} className="lg:hidden">
