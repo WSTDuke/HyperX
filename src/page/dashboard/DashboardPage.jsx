@@ -13,12 +13,10 @@ export default function Home() {
 
     return (
         <div className="bg-gray-900">
-            <Header />
             <DashboadBody_1 />
             <DashboardBody_2 />
             <DashboardBody_3 />
             <DashboardBody_4 />
-            <Footer />
         </div>
     )
 }

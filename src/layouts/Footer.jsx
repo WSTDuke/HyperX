@@ -2,7 +2,7 @@ import React from 'react'
 
 const Footer = () => {
     return (
-        <footer className="bg-[#1a1c29] flex flex-col text-gray-300 py-12 px-6 lg:px-16 gap-8 border-t border-gray-700">
+        <footer className="bg-[#1a1c29] flex flex-col text-gray-300 py-12 px-6 lg:px-16 gap-8 border-t border-gray-700 bg-gray-900 ">
             <div className="lg:col-span-1 flex justify-start lg:justify-center mb-6 lg:mb-0">
                 <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
                     HyperX

@@ -1,6 +1,6 @@
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react' // <--- IMPORT useEffect
 import { Link } from 'react-router-dom'
 
 
@@ -13,15 +13,45 @@ const navigation = [
 
 const Header = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    // 1. STATE để lưu trạng thái cuộn
+    const [scrolled, setScrolled] = useState(false);
+
+    // 2. EFFECT để lắng nghe sự kiện cuộn
+    useEffect(() => {
+        const handleScroll = () => {
+            // Kiểm tra nếu vị trí cuộn Y lớn hơn 50px
+            if (window.scrollY > 50) {
+                setScrolled(true);
+            } else {
+                setScrolled(false);
+            }
+        };
+
+        // Thêm Listener cho sự kiện cuộn
+        window.addEventListener('scroll', handleScroll);
+
+        // Cleanup function: Loại bỏ Listener khi component unmount
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []); // Chỉ chạy một lần khi component mount
+
+    // 3. TẠO LỚP CSS ĐỘNG
+    const headerClasses = `
+        fixed inset-x-0 top-0 z-50 transition-all duration-300 backdrop-blur-md 
+        ${scrolled ? 'bg-gray-900/90 shadow-lg' : 'bg-transparent'}
+    `;
+
     return (
-        <header className="absolute inset-x-0 top-0 z-50">
+        // 4. Áp dụng lớp CSS động
+        <header className={headerClasses}>
             <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
+                {/* ... (Phần còn lại của code navigation không thay đổi) ... */}
                 <div className="flex lg:flex-1">
                     <Link to="/" className="-m-1.5 p-1.5">
                         <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
                             HyperX
                         </span>
-
                     </Link>
                 </div>
                 <div className="flex lg:hidden">
@@ -55,7 +85,7 @@ const Header = () => {
                 <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-gray-900 p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-100/10">
                     <div className="flex items-center justify-between">
                         <a href="#" className="-m-1.5 p-1.5">
-                            <span class="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
+                            <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
                                 HyperX
                             </span>
                         </a>
@@ -94,7 +124,6 @@ const Header = () => {
                 </DialogPanel>
             </Dialog>
         </header>
-
     )
 }
 

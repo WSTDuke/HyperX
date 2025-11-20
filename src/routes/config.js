@@ -1,7 +1,7 @@
 import AuthSignIn from '../page/auth/AuthSignIn';
 import AuthSignUp from '../page/auth/AuthSignUp';
 import Home from '../page/dashboard/DashboardPage';
-import NotFound from '../page/NotFound';
+import NotFound from '../page/notfound/NotFound'
 
 const routes = [
     {

@@ -1,8 +1,37 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 
 const AuthSignUp = () => {
+    // 1. RÚT GỌN STATE: Sử dụng một Object State duy nhất
+    const [formData, setFormData] = useState({
+        name: "",
+        phone: "", // Đổi tên key từ inputNumberPhone thành 'phone' cho ngắn gọn
+        email: "",
+        password: "",
+    })
+
+    // 2. RÚT GỌN HÀM XỬ LÝ: Một hàm handleChange chung
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        // Cập nhật State Object, dùng [name] để đặt tên key động
+        setFormData(prevData => ({
+            ...prevData,
+            [name]: value,
+        }));
+
+        console.log(`Updated ${name}: ${value}`);
+    }
+
+    // (Optional) Xử lý Submit Form
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        console.log("Form submitted with data:", formData);
+        // Logic gọi API đăng ký sẽ đặt ở đây
+    }
+
     return (
-        <div className="relative isolate px-6 pt-6 lg:px-8 h-screen ">
+        <div className="relative isolate px-6 pt-6 lg:px-8 bg-gray-900 ">
             <div
                 aria-hidden="true"
                 className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -23,7 +52,7 @@ const AuthSignUp = () => {
                     </div>
 
                     <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                        <form action="#" method="POST" className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6">
 
                             <div>
                                 <label htmlFor="email" className="block text-sm/6 font-medium text-gray-100">
@@ -36,6 +65,7 @@ const AuthSignUp = () => {
                                         type="text"
                                         required
                                         autoComplete="name"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>
@@ -52,6 +82,7 @@ const AuthSignUp = () => {
                                         type="tel"
                                         required
                                         autoComplete="tel"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>
@@ -68,6 +99,7 @@ const AuthSignUp = () => {
                                         type="email"
                                         required
                                         autoComplete="email"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>
@@ -87,6 +119,7 @@ const AuthSignUp = () => {
                                         type="password"
                                         required
                                         autoComplete="current-password"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>

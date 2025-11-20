@@ -1,8 +1,29 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 
 const AuthSignIn = () => {
+    const [formData, setFormData] = useState({
+        email: "",
+        password: "",
+    })
+
+    const handleChange = (e) => {
+        const { name, value } = e.target.value
+        setFormData(prevData => ({
+            ...prevData,
+            [name]: value,
+        }));
+
+        console.log(`Updated ${name}: ${value}`);
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        console.log("Form submitted with data:", formData);
+    }
+
     return (
-        <div className="relative isolate px-6 pt-14 lg:px-8 h-screen">
+        <div className="relative isolate px-6 pt-14 lg:px-8 bg-gray-900">
             <div
                 aria-hidden="true"
                 className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -23,7 +44,7 @@ const AuthSignIn = () => {
                     </div>
 
                     <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-                        <form action="#" method="POST" className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label htmlFor="email" className="block text-sm/6 font-medium text-gray-100">
                                     Email address
@@ -35,6 +56,7 @@ const AuthSignIn = () => {
                                         type="email"
                                         required
                                         autoComplete="email"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>
@@ -58,6 +80,7 @@ const AuthSignIn = () => {
                                         type="password"
                                         required
                                         autoComplete="current-password"
+                                        onChange={handleChange}
                                         className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-white outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     />
                                 </div>
