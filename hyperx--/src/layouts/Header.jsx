@@ -1,5 +1,7 @@
 import { Dialog, DialogPanel } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+
 
 const navigation = [
     { name: 'Product', href: '#' },
@@ -8,13 +10,14 @@ const navigation = [
     { name: 'Support', href: '#' },
 ]
 
-const Header = ({ mobileMenuOpen, setMobileMenuOpen }) => {
+const Header = () => {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     return (
         <header className="absolute inset-x-0 top-0 z-50">
             <nav aria-label="Global" className="flex items-center justify-between p-6 lg:px-8">
                 <div className="flex lg:flex-1">
                     <a href="#" className="-m-1.5 p-1.5">
-                        <span class="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
                             HyperX
                         </span>
 
