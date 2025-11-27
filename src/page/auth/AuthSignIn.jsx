@@ -189,7 +189,7 @@ const AuthSignIn = () => {
                     </button>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-gray-400">
+                <div className="mt-6 text-center text-sm text-gray-400">
                     <div className="pb-3">Not a member?{" "}
                         <Link to="/signup" className="font-semibold text-indigo-400 hover:text-indigo-300">
                             Sign up
@@ -198,7 +198,7 @@ const AuthSignIn = () => {
                     <Link to="/" className="font-semibold text-indigo-400 hover:text-indigo-300 border-t border-gray-700 pt-1">
                         Back to home
                     </Link>
-                </p>
+                </div>
 
             </div>
 

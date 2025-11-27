@@ -20,9 +20,6 @@ const AuthSignUp = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-
-
-
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -30,26 +27,7 @@ const AuthSignUp = () => {
 
         const { email, password, name, phone } = formData;
 
-        // 1️⃣ CHECK EMAIL TỒN TẠI TRƯỚC
-        const { data: exists, error: checkError } = await supabase.rpc(
-            "check_user_exists",
-            { email }
-        );
-
-        if (checkError) {
-            console.error(checkError);
-            setMessage("User already registered");
-            setLoading(false);
-            return;
-        }
-
-        if (exists) {
-            setMessage("Error: Email already exists.");
-            setLoading(false);
-            return;
-        }
-
-        // 2️⃣ Create user
+        // 🚫 Không kiểm tra email tồn tại — supabase sẽ tự xử lý
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -62,18 +40,12 @@ const AuthSignUp = () => {
         setLoading(false);
 
         if (error) {
-            let msg = error.message;
-
-            if (msg.includes("already registered")) {
-                setMessage("Error: Email already exists.");
-            } else {
-                setMessage(`Error: ${msg}`);
-            }
-
+            console.log("Supabase error:", error.message);
+            setMessage("Đăng ký thất bại. Vui lòng thử lại.");
             return;
         }
 
-        // 3️⃣ Redirect user to verify screen
+        // ✔ Điều hướng sang trang verify
         navigate("/verify", {
             state: {
                 email,
@@ -81,7 +53,6 @@ const AuthSignUp = () => {
             }
         });
     };
-
 
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(
@@ -93,9 +64,8 @@ const AuthSignUp = () => {
     }, []);
 
     return (
-        <div className="relative isolate px-6 pt-14 pb-24  lg:px-8 bg-gray-900 min-h-screen">
+        <div className="relative isolate px-6 pt-14 pb-24 lg:px-8 bg-gray-900 min-h-screen">
 
-            {/* === TOP GRADIENT === */}
             <div
                 aria-hidden="true"
                 className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -109,7 +79,6 @@ const AuthSignUp = () => {
                 />
             </div>
 
-            {/* === BOX SIGN UP (KHÔNG CĂN GIỮA) === */}
             <div className="relative max-w-md mx-auto bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-10 py-12 shadow-2xl shadow-black/40">
 
                 <h2 className="text-center text-3xl font-bold tracking-tight text-white">
@@ -193,14 +162,10 @@ const AuthSignUp = () => {
                     </div>
 
                     {message && (
-                        <div
-                            className={`px-4 py-2 rounded-md text-center text-sm font-medium bg-red-900/50 text-red-300 ${message.startsWith("Error")
-                                }`}
-                        >
+                        <div className="px-4 py-2 rounded-md text-center text-sm font-medium bg-red-900/50 text-red-300">
                             {message}
                         </div>
                     )}
-
 
                     <button
                         type="submit"
@@ -213,8 +178,8 @@ const AuthSignUp = () => {
                 </form>
 
                 <p className="mt-6 text-center text-sm text-gray-400">
-
-                    <div className="pb-3">Already have an account?{" "}
+                    <div className="pb-3">
+                        Already have an account?{" "}
                         <Link to="/signin" className="font-semibold text-indigo-400 hover:text-indigo-300">
                             Sign in
                         </Link>
@@ -224,7 +189,6 @@ const AuthSignUp = () => {
                     </Link>
                 </p>
             </div>
-
 
         </div>
     );
