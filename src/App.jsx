@@ -1,10 +1,26 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import routes from './routes/config';
-import { useEffect, useState, Suspense } from 'react'; // Thêm Suspense
+import { useEffect, useState, Suspense } from 'react';
 import Header from './layouts/Header';
 import Footer from './layouts/Footer';
 import { supabase } from './supabaseClient';
 import LazyLoading from './LazyLoading';
+import ScrollToTop from './ScrollTop';
+import AuthSignIn from './page/auth/AuthSignIn';
+
+// Bạn cần đảm bảo ProtectedRoutee được định nghĩa đúng cách 
+// và truyền prop user xuống cho component con.
+const ProtectedRoutee = ({ element: Element, user, ...rest }) => {
+  // Logic bảo vệ route, ví dụ:
+  if (!user) {
+    // Nếu chưa đăng nhập, chuyển hướng đến /signin
+    // Cần import Navigate từ react-router-dom
+    // return <Navigate to="/signin" replace />; 
+    return <Navigate to="/signin" replace />;
+  }
+  return <Element user={user} {...rest} />;
+};
+
 
 function AppRoutes({ user }) {
   const location = useLocation();
@@ -12,17 +28,26 @@ function AppRoutes({ user }) {
 
   return (
     <>
+      <ScrollToTop />
       {!hideHeaderPaths.includes(location.pathname) && <Header user={user} />}
 
-      {/* Suspense sẽ hiện loading khi chuyển trang nếu bạn dùng React.lazy trong routes/config */}
       <Suspense fallback={<LazyLoading />}>
         <Routes>
           {routes.map((route, index) => {
+            // FIX: Đảm bảo truyền prop user cho Profile component 
+            // dù nó là private hay public route, nếu nó cần prop đó.
             const ElementComponent = route.private ? (
-              // Truyền user vào ProtectedRoute nếu cần kiểm tra quyền
+              // Với route private, user được truyền qua ProtectedRoutee
               <ProtectedRoutee element={route.element} user={user} />
             ) : (
-              <route.element />
+              // VỚI CÁC ROUTE PUBLIC (ví dụ: Profile là public):
+              // Nếu route.element chính là Profile component, nó cần được truyền user
+              // Tuy nhiên, vì chúng ta không biết routes.js, đây là một điểm cần lưu ý.
+              // Nếu component Profile cần prop user, bạn phải truyền nó ở đây!
+              // Giả sử component Profile là một route public cần user:
+              route.path === '/profile'
+                ? <route.element user={user} /> // Nếu là Profile, truyền user
+                : <route.element /> // Các component khác không cần user
             );
 
             return <Route key={index} path={route.path} element={ElementComponent} />;
@@ -37,33 +62,28 @@ function AppRoutes({ user }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  // Khởi tạo là true để mặc định vào là hiện Loading ngay
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Kiểm tra session hiện tại
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) {
-        setUser(data.session.user);
-      }
-      // QUAN TRỌNG: Sau khi kiểm tra xong mới tắt loading
-      setIsAuthLoading(false);
-    });
-
-    // 2. Lắng nghe thay đổi auth (đăng nhập/đăng xuất)
+    // Chỉ lắng nghe thay đổi auth (Listener này sẽ bắn ra sự kiện đầu tiên
+    // để xác định trạng thái user ngay khi component mount, thay thế cho getSession)
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      // 1. Cập nhật user state
       setUser(session?.user || null);
-      // Đảm bảo tắt loading nếu event này bắn ra
+
+      // 2. Đảm bảo tắt loading sau khi nhận được trạng thái auth đầu tiên
+      // (Ngay cả khi session là null, auth state đã được xác định xong)
       setIsAuthLoading(false);
     });
 
+    // Cleanup
     return () => listener.subscription.unsubscribe();
   }, []);
 
   // Nếu đang check auth (khi vừa reload), hiện Loading component
-  // Return này chặn toàn bộ Router render cho đến khi biết user là ai
   if (isAuthLoading) {
-    return <LazyLoading />;
+    // Sử dụng LazyLoading với status để thân thiện hơn
+    return <LazyLoading status="Checking user session..." />;
   }
 
   return (

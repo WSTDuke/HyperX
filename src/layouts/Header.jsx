@@ -38,7 +38,6 @@ const Header = ({ user }) => {
         await supabase.auth.signOut();
         setTimeout(() => {
             setLoggingOut(false);
-            navigate('/');
         }, 800);
     };
 
