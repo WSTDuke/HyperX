@@ -8,6 +8,7 @@ import NotFound from '../page/notfound/NotFound'
 import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
 import Product from '../page/product/page/Product';
+import NewProduct from '../page/product/page/NewProduct';
 import Docs from '../page/docs/docs';
 import Setting from '../page/setting/Setting';
 
@@ -57,6 +58,13 @@ const routes = [
         element: Setting, // Lưu ý: Biến này phải khớp với const Docs bên trên
         private: true,
         name: "Cài đặt",
+    },
+
+    {
+        path: "/product/new-product",
+        element: NewProduct,
+        private: true,
+        name: "Thêm sản phẩm",
     },
 
     // Not found
