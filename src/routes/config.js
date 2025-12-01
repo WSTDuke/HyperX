@@ -1,4 +1,4 @@
-import { lazy } from 'react'; // 1. Quan trọng: Phải import lazy
+import { lazy, Profiler } from 'react'; // 1. Quan trọng: Phải import lazy
 
 // 2. Chuyển đổi các import thường thành lazy import
 import AuthSignIn from '../page/auth/AuthSignIn';
@@ -9,6 +9,7 @@ import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
 import Product from '../page/product/page/Product';
 import Docs from '../page/docs/docs';
+import Setting from '../page/setting/Setting';
 
 const routes = [
     {
@@ -42,6 +43,7 @@ const routes = [
     {
         path: "/product",
         element: Product,
+        private: true,
         name: "Sản phẩm",
     },
     {
@@ -49,6 +51,14 @@ const routes = [
         element: Docs, // Lưu ý: Biến này phải khớp với const Docs bên trên
         name: "Tài liệu",
     },
+
+    {
+        path: "/setting",
+        element: Setting, // Lưu ý: Biến này phải khớp với const Docs bên trên
+        private: true,
+        name: "Cài đặt",
+    },
+
     // Not found
     {
         path: "*",
