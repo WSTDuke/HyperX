@@ -10,6 +10,8 @@ import AuthCallback from '../page/auth/AuthCallback';
 import Product from '../page/product/page/Product';
 import NewProduct from '../page/product/page/NewProduct';
 import Docs from '../page/docs/docs';
+import Setting from '../page/setting/Setting';
+import Community from '../page/community/CommunityPage';
 
 const routes = [
     {
@@ -50,6 +52,26 @@ const routes = [
         path: "/docs",
         element: Docs, // Lưu ý: Biến này phải khớp với const Docs bên trên
         name: "Tài liệu",
+    },
+
+    {
+        path: "/setting",
+        element: Setting, // Lưu ý: Biến này phải khớp với const Docs bên trên
+        private: true,
+        name: "Cài đặt",
+    },
+
+    {
+        path: "/product/new-product",
+        element: NewProduct,
+        private: true,
+        name: "Thêm sản phẩm",
+    },
+    {
+        path: "/community",
+        element: Community,
+        private: true,
+        name: "Cộng đồng",
     },
     // Not found
     {
