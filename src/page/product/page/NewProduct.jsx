@@ -1,34 +1,43 @@
-import { Package, Upload, User, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
-import React, { useState } from 'react';
-import { supabase } from '../../../supabaseClient'; // Đảm bảo đường dẫn đúng
+import { Package, Upload, User, CheckCircle, ArrowRight, ArrowLeft, BookOpen } from 'lucide-react'; // Thêm icon BookOpen
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../../../supabaseClient'; 
 import { Link } from 'react-router-dom';
 
-const NewProduct = ({ user }) => {
-    // Chỉ dùng 1 biến state duy nhất để quản lý các bước (Step 1, 2, 3)
+const NewProduct = () => {
+    
+    const [user, setUser] = useState(null);
+
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [isSuccess, setIsSuccess] = useState(false);
 
-    // State cho dữ liệu text
     const [productData, setProductData] = useState({
         productName: "",
         description: "",
+        instructions: "", // 1. Thêm state lưu hướng dẫn sử dụng
         price: "",
     });
 
-    // State cho Tags
     const [tags, setTags] = useState({
-        application: "",      // Software | Game
-        os: []                // Windows | macOS | Linux
+        application: "",      
+        os: []                
     });
 
-    // State cho Files (Chuẩn bị cho việc Upload lên Storage sau này)
     const [selectedFiles, setSelectedFiles] = useState(null);
     const [selectedImages, setSelectedImages] = useState(null);
 
-    // --- HANDLERS ---
+    useEffect(() => {
+        const getUserData = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setUser(user);
+            }
+        };
+        getUserData();
+    }, []);
 
+    // --- HANDLERS ---
     const handleChange = (e) => {
         const { name, value } = e.target;
         setProductData(prev => ({ ...prev, [name]: value }));
@@ -62,23 +71,18 @@ const NewProduct = ({ user }) => {
     };
 
     // --- NAVIGATION LOGIC ---
-
     const handleNext = () => {
         setMessage("");
         if (currentStep === 1) {
-            // Validate Step 1
             if (!productData.productName || !tags.application || tags.os.length === 0) {
                 setMessage("Please fill in Product Name, Application, and select at least one OS.");
                 return;
             }
             if (!productData.price) {
-                // Nếu giá rỗng, set về 0 hoặc bắt nhập
                 setProductData(prev => ({ ...prev, price: "0" }));
             }
             setCurrentStep(2);
         } else if (currentStep === 2) {
-            // Validate Step 2 (Optional: Bắt buộc phải có file mới cho qua?)
-            // if (!selectedFiles) { setMessage("Please upload product files."); return; }
             setCurrentStep(3);
         }
     };
@@ -90,31 +94,32 @@ const NewProduct = ({ user }) => {
         }
     };
 
-    // --- SUBMIT LOGIC (CHỈ GỌI Ở BƯỚC CUỐI) ---
-
+    // --- SUBMIT LOGIC ---
     const handleFinalSubmit = async () => {
         setLoading(true);
         setMessage("");
         setIsSuccess(false);
 
+        if (!user) {
+            setMessage("Error: You must be logged in to upload products.");
+            setLoading(false);
+            return;
+        }
+
         try {
-            // 1. Chuẩn bị dữ liệu Tags cho cột JSONB
             const combinedTags = [tags.application, ...tags.os];
 
-            // 2. Chuẩn bị object Insert
             const newProduct = {
                 name: productData.productName,
                 description: productData.description,
+                instructions: productData.instructions, // 2. Thêm vào object gửi lên Supabase
                 price: parseFloat(productData.price) || 0,
-                tag: combinedTags, // Supabase client tự convert mảng thành JSONB
-                user_id: user?.id, // Rất quan trọng: cần user đã login
-                // Thông tin người upload (như yêu cầu cũ của bạn)
-                name_upload: user?.user_metadata?.full_name || user?.email || 'Unknown',
-                email_upload: user?.email || '',
-                // image_url: ... (Xử lý upload ảnh lên Storage lấy link điền vào đây sau)
+                tag: combinedTags, 
+                user_id: user.id,
+                name_upload: user.user_metadata?.full_name || user.email || 'Unknown',
+                email_upload: user.email, 
             };
 
-            // 3. Gọi Supabase Insert
             const { data, error } = await supabase.from('products').insert([newProduct]);
 
             if (error) throw error;
@@ -122,10 +127,8 @@ const NewProduct = ({ user }) => {
             setMessage("Product added successfully!");
             setIsSuccess(true);
 
-            // Reset form hoặc chuyển hướng
-            // setTimeout(() => window.location.href = '/product', 2000);
-
         } catch (error) {
+            console.error(error);
             setMessage("Failed to add product: " + error.message);
             setIsSuccess(false);
         } finally {
@@ -133,7 +136,6 @@ const NewProduct = ({ user }) => {
         }
     };
 
-    // Danh sách các bước để render Sidebar
     const steps = [
         { id: 1, label: "Product Info", icon: Package },
         { id: 2, label: "Upload Files", icon: Upload },
@@ -222,6 +224,20 @@ const NewProduct = ({ user }) => {
                                                 className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition resize-none"
                                             />
                                         </div>
+                                        
+                                        {/* 3. Thêm phần nhập Hướng dẫn sử dụng */}
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Usage Instructions</label>
+                                            <textarea
+                                                name="instructions"
+                                                rows="4"
+                                                value={productData.instructions}
+                                                onChange={handleChange}
+                                                placeholder="How to install or use this product?"
+                                                className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-3 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition resize-none"
+                                            />
+                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-medium mb-2">Price ($)</label>
                                             <input
@@ -277,7 +293,7 @@ const NewProduct = ({ user }) => {
                             </div>
                         )}
 
-                        {/* STEP 2: UPLOAD FILES */}
+                        {/* STEP 2: UPLOAD FILES (Giữ nguyên) */}
                         {currentStep === 2 && (
                             <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-8">
                                 <div className="flex items-center mb-6 text-indigo-400">
@@ -360,10 +376,20 @@ const NewProduct = ({ user }) => {
                                             </div>
                                         </div>
                                     </div>
+                                    
+                                    {/* 4. Hiển thị xem trước Hướng dẫn sử dụng */}
+                                    {productData.instructions && (
+                                        <div className="border-t border-gray-700 pt-4">
+                                            <p className="text-gray-400 text-sm mb-1">Instructions</p>
+                                            <p className="text-sm text-gray-300 whitespace-pre-line line-clamp-3">
+                                                {productData.instructions}
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div className="border-t border-gray-700 my-4"></div>
 
-                                    {/* Uploader Info (Read Only) */}
+                                    {/* Uploader Info */}
                                     <div>
                                         <h3 className="text-indigo-300 font-semibold mb-4 flex items-center">
                                             <User className="w-4 h-4 mr-2" /> Uploader Information
@@ -388,7 +414,6 @@ const NewProduct = ({ user }) => {
                         )}
 
                         {/* --- FOOTER: MESSAGE & BUTTONS --- */}
-                        {/* --- FOOTER: MESSAGE & BUTTONS --- */}
                         <div className="mt-8 pt-6 border-t border-gray-700/50">
                             {message && (
                                 <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-semibold flex items-center ${isSuccess ? "bg-green-900/30 text-green-400 border border-green-800" : "bg-red-900/30 text-red-400 border border-red-800"}`}>
@@ -397,9 +422,7 @@ const NewProduct = ({ user }) => {
                             )}
 
                             <div className="flex justify-between items-center">
-
                                 {/* BUTTON LEFT: BACK */}
-                                {/* Chỉ hiện nút Back khi ở bước > 1 VÀ chưa submit thành công */}
                                 {currentStep > 1 && !isSuccess ? (
                                     <button
                                         onClick={handlePrevious}
@@ -408,7 +431,7 @@ const NewProduct = ({ user }) => {
                                         <ArrowLeft className="w-4 h-4 mr-2" /> Back
                                     </button>
                                 ) : (
-                                    <div></div> /* Spacer giữ khoảng cách */
+                                    <div></div>
                                 )}
 
                                 {/* BUTTON RIGHT: NEXT / SUBMIT / BACK TO PRODUCT */}
@@ -420,10 +443,8 @@ const NewProduct = ({ user }) => {
                                         Next Step <ArrowRight className="w-4 h-4 ml-2" />
                                     </button>
                                 ) : (
-                                    // Đang ở Step 3 (Review & Submit)
                                     <>
                                         {isSuccess ? (
-                                            // TRƯỜNG HỢP THÀNH CÔNG -> Hiện nút về trang chủ
                                             <Link
                                                 to="/product"
                                                 className="flex items-center px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 transition"
@@ -431,7 +452,6 @@ const NewProduct = ({ user }) => {
                                                 <ArrowLeft className="w-4 h-4 mr-2" /> Back to Products
                                             </Link>
                                         ) : (
-                                            // TRƯỜNG HỢP CHƯA SUBMIT -> Hiện nút Submit
                                             <button
                                                 onClick={handleFinalSubmit}
                                                 disabled={loading}

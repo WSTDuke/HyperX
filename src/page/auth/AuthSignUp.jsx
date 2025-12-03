@@ -20,6 +20,7 @@ const AuthSignUp = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    // Hàm handleSignUp đã được tối ưu hóa để xử lý đăng ký và điều hướng
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -27,12 +28,14 @@ const AuthSignUp = () => {
 
         const { email, password, name, phone } = formData;
 
-        // 🚫 Không kiểm tra email tồn tại — supabase sẽ tự xử lý
-        const { data, error } = await supabase.auth.signUp({
+        // Gọi API đăng ký từ Supabase
+        const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
+                // Đặt đường dẫn chuyển hướng sau khi xác thực email (tùy chọn)
                 emailRedirectTo: `${window.location.origin}/auth/callback`,
+                // Thêm dữ liệu tùy chỉnh vào user metadata
                 data: { full_name: name, phone_number: phone },
             },
         });
@@ -40,23 +43,26 @@ const AuthSignUp = () => {
         setLoading(false);
 
         if (error) {
-            console.log("Supabase error:", error.message);
-            setMessage("Đăng ký thất bại. Vui lòng thử lại.");
+            console.error("Supabase sign up error:", error.message);
+            setMessage("Đăng ký thất bại. Vui lòng kiểm tra thông tin và thử lại.");
             return;
         }
 
-        // ✔ Điều hướng sang trang verify
+        // ✔ Điều hướng sang trang verify sau khi đăng ký thành công
         navigate("/verify", {
             state: {
                 email,
-                message: "Please check your email to verify your account."
+                message: "Please check your email to verify your account. You will be redirected back once verified."
             }
         });
     };
 
+    // Theo dõi trạng thái xác thực (được giữ lại cho các logic mở rộng sau này)
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange(
-            (event, session) => { }
+            (event, session) => { 
+                // Có thể thêm logic điều hướng ở đây nếu người dùng đã đăng nhập
+            }
         );
         return () => {
             authListener.subscription.unsubscribe();
@@ -66,6 +72,7 @@ const AuthSignUp = () => {
     return (
         <div className="relative isolate px-6 pt-14 pb-24 lg:px-8 bg-gray-900 min-h-screen">
 
+            {/* Background Blob */}
             <div
                 aria-hidden="true"
                 className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
@@ -79,6 +86,7 @@ const AuthSignUp = () => {
                 />
             </div>
 
+            {/* Sign Up Card */}
             <div className="relative max-w-md mx-auto bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-10 py-12 shadow-2xl shadow-black/40">
 
                 <h2 className="text-center text-3xl font-bold tracking-tight text-white">
@@ -89,6 +97,7 @@ const AuthSignUp = () => {
 
                 <form onSubmit={handleSignUp} className="mt-8 space-y-6">
 
+                    {/* Name Field */}
                     <div>
                         <label htmlFor="name" className="block text-sm font-medium text-gray-100">
                             Name
@@ -107,6 +116,7 @@ const AuthSignUp = () => {
                         />
                     </div>
 
+                    {/* Phone Field */}
                     <div>
                         <label htmlFor="phone" className="block text-sm font-medium text-gray-100">
                             Phone
@@ -125,6 +135,7 @@ const AuthSignUp = () => {
                         />
                     </div>
 
+                    {/* Email Field */}
                     <div>
                         <label htmlFor="email" className="block text-sm font-medium text-gray-100">
                             Email address
@@ -143,6 +154,7 @@ const AuthSignUp = () => {
                         />
                     </div>
 
+                    {/* Password Field */}
                     <div>
                         <label htmlFor="password" className="block text-sm font-medium text-gray-100">
                             Password
@@ -161,12 +173,14 @@ const AuthSignUp = () => {
                         />
                     </div>
 
+                    {/* Message / Error Display */}
                     {message && (
                         <div className="px-4 py-2 rounded-md text-center text-sm font-medium bg-red-900/50 text-red-300">
                             {message}
                         </div>
                     )}
 
+                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
@@ -177,17 +191,19 @@ const AuthSignUp = () => {
                     </button>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-gray-400">
+                {/* Footer Links (Fixed: Changed <p> to <div>) */}
+                <div className="mt-6 text-center text-sm text-gray-400">
                     <div className="pb-3">
                         Already have an account?{" "}
                         <Link to="/signin" className="font-semibold text-indigo-400 hover:text-indigo-300">
                             Sign in
                         </Link>
                     </div>
-                    <Link to="/" className="font-semibold text-indigo-400 hover:text-indigo-300 border-t border-gray-700 pt-1">
+                    {/* Back to Home Link */}
+                    <Link to="/" className="block font-semibold text-indigo-400 hover:text-indigo-300 border-t border-gray-700 pt-3">
                         Back to home
                     </Link>
-                </p>
+                </div>
             </div>
 
         </div>

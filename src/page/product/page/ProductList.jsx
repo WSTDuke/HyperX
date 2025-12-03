@@ -1,5 +1,4 @@
 import { Package, Plus, Search, Tag } from 'lucide-react';
-import React from 'react'
 import { Link } from 'react-router-dom';
 
 const ProductList = ({ handleSearchSubmit, search, isLoading, products, formatCurrency, setSearch }) => {
@@ -11,7 +10,7 @@ const ProductList = ({ handleSearchSubmit, search, isLoading, products, formatCu
                         <h1 className="text-3xl font-bold text-white mb-1">Products</h1>
                         <p className="text-slate-400 text-sm">Manage and view your inventory.</p>
                     </div>
-                    <Link to={'new-product'}>
+                    <Link to="/create-product">
                         <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95">
                             <Plus size={18} />
                             <span>New Product</span>
@@ -37,8 +36,9 @@ const ProductList = ({ handleSearchSubmit, search, isLoading, products, formatCu
                 </form>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 md:px-10 pt-0">
+            <div className="flex-1 overflow-y-auto p-6 md:px-10 pt-0 cursor-pointer custom-scrollbar">
                 {isLoading ? (
+                    /* === PHẦN LOADING (SỬA LẠI: Không dùng Link, không dùng item) === */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {[...Array(8)].map((_, i) => (
                             <div key={i} className="bg-[#1e293b] rounded-xl p-4 animate-pulse h-80 border border-slate-800">
@@ -61,42 +61,44 @@ const ProductList = ({ handleSearchSubmit, search, isLoading, products, formatCu
                                 {products.map((item) => {
                                     let displayTags = item.tag && Array.isArray(item.tag) ? [...item.tag] : [];
 
-
                                     return (
-                                        <div key={item.id} className="group bg-[#1e293b] border border-slate-700/50 rounded-xl overflow-hidden hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col">
-                                            <div className="relative aspect-video overflow-hidden bg-slate-800">
-                                                {item.image_url ? (
-                                                    <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-slate-600"><Package size={32} /></div>
-                                                )}
-                                                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                                                    <p className="text-indigo-400 font-bold text-sm">
-                                                        {formatCurrency(item.price)}
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-5 flex flex-col flex-1">
-                                                <div className="mb-2">
-                                                    <h3 className="text-lg font-semibold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">{item.name}</h3>
-                                                </div>
-                                                <p className="text-slate-400 text-sm line-clamp-2 mb-4 flex-1">{item.description || "No description available."}</p>
-                                                {displayTags.length > 0 && (
-                                                    <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-700/50 flex-wrap">
-                                                        <Tag size={14} className="text-slate-500 flex-shrink-0" />
-                                                        {displayTags.map((t, index) => (
-                                                            <span
-                                                                key={index}
-                                                                className={`text-xs px-2 py-1 rounded border ${t === "Free" ? "bg-green-500/20 text-green-300 border-green-500/30 font-semibold" : "bg-slate-800 text-slate-300 border-slate-700"}`}
-                                                            >
-                                                                {t}
-                                                            </span>
-                                                        ))}
+                                        /* === PHẦN SẢN PHẨM THẬT (SỬA LẠI: Thêm Link bao bọc ở đây) === */
+                                        <Link to={`/product/${item.id}`} key={item.id} className="block group">
+                                            <div className="bg-[#1e293b] h-full border border-slate-700/50 rounded-xl overflow-hidden hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col">
+                                                <div className="relative aspect-video overflow-hidden bg-slate-800">
+                                                    {item.image_url ? (
+                                                        <img src={item.image_url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-600"><Package size={32} /></div>
+                                                    )}
+                                                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
+                                                        <p className="text-indigo-400 font-bold text-sm">
+                                                            {formatCurrency(item.price)}
+                                                        </p>
                                                     </div>
-                                                )}
+                                                </div>
+
+                                                <div className="p-5 flex flex-col flex-1">
+                                                    <div className="mb-2">
+                                                        <h3 className="text-lg font-semibold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">{item.name}</h3>
+                                                    </div>
+                                                    <p className="text-slate-400 text-sm line-clamp-2 mb-4 flex-1">{item.description || "No description available."}</p>
+                                                    {displayTags.length > 0 && (
+                                                        <div className="flex items-center gap-2 mt-auto pt-4 border-t border-slate-700/50 flex-wrap">
+                                                            <Tag size={14} className="text-slate-500 flex-shrink-0" />
+                                                            {displayTags.map((t, index) => (
+                                                                <span
+                                                                    key={index}
+                                                                    className={`text-xs px-2 py-1 rounded border ${t === "Free" ? "bg-green-500/20 text-green-300 border-green-500/30 font-semibold" : "bg-slate-800 text-slate-300 border-slate-700"}`}
+                                                                >
+                                                                    {t}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </Link>
                                     );
                                 })}
                             </div>

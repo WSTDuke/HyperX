@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { User, Clock, X, Mail, Heart, MessageCircle, Send, Search, MoreVertical, Trash2, AlertTriangle } from "lucide-react";
+import {Search,} from "lucide-react";
 import { Link } from "react-router-dom";
 import PostFormModal from "./PostFormModal";
 import PostItem from "./PostItem";
@@ -30,15 +29,26 @@ export default function Community({ user }) {
         load();
     }, [user]);
 
-    const loadPosts = async () => {
-        setLoading(true);
-        const { data, error } = await supabase.from("posts_view").select("*").order("created_at", { ascending: false });
-        if (error) console.error("Lỗi tải bài viết:", error);
-        else setPosts(data || []);
+const loadPosts = useCallback(async () => {
+    const { data, error } = await supabase
+        .from("posts_view")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) console.error("Lỗi tải bài viết:", error);
+    else setPosts(data || []);
+}, []);
+
+
+useEffect(() => {
+    const fetch = async () => {
+        setLoading(true);     // Chỉ đặt loading trong effect
+        await loadPosts();    // Chỉ fetch, KHÔNG setLoading ở trong runtime của useCallback
         setLoading(false);
     };
+    fetch();
+}, []);
 
-    useEffect(() => { loadPosts(); }, []);
 
     const submitPost = async () => {
         if (!currentUser || !currentUser.id) return alert("Lỗi: Không tìm thấy thông tin người dùng!");

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../supabaseClient";
 import ProductSidebar from "./ProductSidebar";
 import ProductList from "./ProductList";
+import { formatCurrency } from "./format";
 
 const ProductPage = () => {
     const [search, setSearch] = useState("");
@@ -36,11 +37,11 @@ const ProductPage = () => {
                 const osTags = selectedTags.filter(tag => tagListOS.includes(tag));
 
                 if (appTags.length > 0) {
-                    const condition = appTags.map(t => `tag.cs.["${t}"]`).join(',');
+                    const condition = appTags.map(t => `tag.cs.{${t}}`).join(',');
                     query = query.or(condition);
                 }
                 if (osTags.length > 0) {
-                    const condition = osTags.map(t => `tag.cs.["${t}"]`).join(',');
+                    const condition = osTags.map(t => `tag.cs.{${t}}`).join(',');
                     query = query.or(condition);
                 }
             }
@@ -116,10 +117,7 @@ const ProductPage = () => {
         fetchProducts();
     };
 
-    const formatCurrency = (amount) => {
-        if (amount === 0) return "Free";
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
-    };
+   
 
     // Hàm clear tất cả filter bao gồm cả sort
     const clearAllFilters = () => {

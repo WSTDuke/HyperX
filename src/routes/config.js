@@ -1,6 +1,6 @@
-import { lazy, Profiler } from 'react'; // 1. Quan trọng: Phải import lazy
+import { lazy, Profiler } from 'react';
 
-// 2. Chuyển đổi các import thường thành lazy import
+// ... Các import cũ giữ nguyên ...
 import AuthSignIn from '../page/auth/AuthSignIn';
 import AuthSignUp from '../page/auth/AuthSignUp';
 const Home = lazy(() => import('../page/dashboard/DashboardPage'));
@@ -9,6 +9,10 @@ import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
 import Product from '../page/product/page/Product';
 import NewProduct from '../page/product/page/NewProduct';
+
+// 1. THÊM IMPORT NÀY (Nhớ tạo file ProductDetail.jsx trước nhé)
+import ProductDetail from '../page/product/page/ProductDetail'; 
+
 import Docs from '../page/docs/docs';
 import Setting from '../page/setting/Setting';
 import Community from '../page/community/CommunityPage';
@@ -20,6 +24,7 @@ const routes = [
         exact: true,
         name: "Trang Chủ",
     },
+        // -----------------------------------------------------------
     {
         path: "/signin",
         element: AuthSignIn,
@@ -42,38 +47,48 @@ const routes = [
         element: AuthCallback,
         name: "Xác thực người dùng",
     },
+        // -----------------------------------------------------------
     {
         path: "/product",
         element: Product,
         private: true,
         name: "Sản phẩm",
     },
+    // SỬA DÒNG NÀY: Đổi từ "/product/new-product" thành "/create-product"
     {
-        path: "/docs",
-        element: Docs, // Lưu ý: Biến này phải khớp với const Docs bên trên
-        name: "Tài liệu",
-    },
-
-    {
-        path: "/setting",
-        element: Setting, // Lưu ý: Biến này phải khớp với const Docs bên trên
-        private: true,
-        name: "Cài đặt",
-    },
-
-    {
-        path: "/product/new-product",
+        path: "/create-product", 
         element: NewProduct,
         private: true,
         name: "Thêm sản phẩm",
     },
+    // Route chi tiết giữ nguyên
+    {
+        path: "/product/:id", 
+        element: ProductDetail,
+        private: true,
+        name: "Chi tiết sản phẩm",
+    },
+    // -----------------------------------------------------------
+    {
+        path: "/docs",
+        element: Docs, 
+        name: "Tài liệu",
+    },
+        // -----------------------------------------------------------
+    {
+        path: "/setting",
+        element: Setting, 
+        private: true,
+        name: "Cài đặt",
+    },
+        // -----------------------------------------------------------
     {
         path: "/community",
         element: Community,
         private: true,
         name: "Cộng đồng",
     },
-    // Not found
+        // -----------------------------------------------------------
     {
         path: "*",
         element: NotFound,
