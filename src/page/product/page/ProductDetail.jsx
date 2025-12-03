@@ -4,8 +4,7 @@ import { supabase } from '../../../supabaseClient';
 import {
     ArrowLeft, Package, Edit, Trash2,
     DollarSign, Clock, CheckCircle2, ArrowRight,
-    ChevronLeft, ChevronRight, BookOpen, 
-    X, Download, AlertTriangle // <--- 1. Import thêm icon AlertTriangle
+    ChevronLeft, ChevronRight, X, Download, AlertTriangle
 } from 'lucide-react';
 import UserAvatar from '../../community/UserAvatar';
 
@@ -19,16 +18,11 @@ const ProductDetail = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
-    // State cho Modal Download
     const [showModal, setShowModal] = useState(false);
-    
-    // --- 2. State cho Modal Delete ---
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Danh sách các tag được coi là Hệ điều hành để lọc
-    const KNOWN_OS = ['Windows', 'macOS', 'Linux', 'Android', 'iOS'];
+    const KNOWN_OS = ['Windows', 'macOS', 'Linux'];
 
     const formatCurrency = (amount) => {
         if (amount === 0 || amount === undefined) return "Free";
@@ -45,11 +39,9 @@ const ProductDetail = () => {
         }
     };
 
-    // --- 3. Hàm xử lý Xóa sản phẩm (Gọi khi bấm Confirm trong Modal) ---
     const handleConfirmDelete = async () => {
         setIsDeleting(true);
         try {
-            // Xóa row trong bảng products
             const { error } = await supabase
                 .from('products')
                 .delete()
@@ -57,7 +49,6 @@ const ProductDetail = () => {
 
             if (error) throw error;
 
-            // Xóa xong thì đóng modal và chuyển trang
             setShowDeleteModal(false);
             navigate('/product'); 
             
@@ -73,10 +64,8 @@ const ProductDetail = () => {
             setIsLoading(true);
             try {
                 if (scrollRef.current) scrollRef.current.scrollTop = 0;
-                
-                if (id === 'new-product') return; 
+                if (id === 'new-product') return;
 
-                // 1. Lấy sản phẩm hiện tại
                 const { data: currentProduct, error: productError } = await supabase
                     .from('products')
                     .select('*')
@@ -84,13 +73,31 @@ const ProductDetail = () => {
                     .single();
 
                 if (productError) throw productError;
-                setProduct(currentProduct);
 
-                // Lấy user hiện tại
+                let authorProfile = {};
+                
+                if (currentProduct.email_upload) {
+                    const { data: profileData } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('email', currentProduct.email_upload)
+                        .maybeSingle();
+                    
+                    if (profileData) {
+                        authorProfile = profileData;
+                    }
+                }
+
+                const productWithProfile = {
+                    ...currentProduct,
+                    profiles: authorProfile 
+                };
+
+                setProduct(productWithProfile);
+
                 const { data: userData } = await supabase.auth.getUser();
                 if (userData?.user) setCurrentUser(userData.user);
 
-                // 2. Logic lấy sản phẩm liên quan
                 let query = supabase
                     .from('products')
                     .select('*')
@@ -99,20 +106,15 @@ const ProductDetail = () => {
                     .order('created_at', { ascending: false });
 
                 if (currentProduct.tag && Array.isArray(currentProduct.tag) && currentProduct.tag.length > 0) {
-                    const firstTag = currentProduct.tag[0]; 
-                    query = query.contains('tag', JSON.stringify([firstTag])); 
+                    const firstTag = currentProduct.tag[0];
+                    query = query.contains('tag', JSON.stringify([firstTag]));
                 }
 
-                const { data: relatedData, error: relatedError } = await query;
-
-                if (relatedError) {
-                    console.error("Lỗi lấy sản phẩm liên quan:", relatedError);
-                } else {
-                    setRelatedProducts(relatedData || []);
-                }
+                const { data: relatedData } = await query;
+                setRelatedProducts(relatedData || []);
 
             } catch (error) {
-                console.error("Lỗi tải dữ liệu:", error);
+                console.error("Error loading data:", error);
                 setProduct(null);
             } finally {
                 setIsLoading(false);
@@ -152,27 +154,31 @@ const ProductDetail = () => {
     );
 
     const displayTags = product.tag && Array.isArray(product.tag) ? [...product.tag] : [];
-    const userName = product?.name_upload || 'Unknown User';
-    const userEmail = product?.email_upload || 'No Email';
-    const availableOS = getProductOSTags();
+    const userName = product?.profiles?.full_name || product?.name_upload || 'Unknown User';
+    const userEmail = product?.profiles?.email || product?.email_upload || 'No Email';
 
+    const uploaderForAvatar = {
+        id: product?.profiles?.id || product?.user_id,
+        full_name: userName,
+        email: userEmail,
+        avatar_url: product?.profiles?.avatar_url || null,
+    };
+
+    const availableOS = getProductOSTags();
     const isOwner = currentUser && product && (currentUser.email === product.email_upload);
 
     return (
         <main ref={scrollRef} className="flex-1 flex flex-col h-full relative bg-[#0f172a] overflow-y-auto custom-scrollbar pt-18">
-
-            {/* Header */}
             <div className="p-6 md:px-10 py-6 flex items-center justify-between bg-[#0f172a]/80 backdrop-blur-sm sticky top-0 z-20 border-b border-slate-800">
                 <button onClick={() => navigate('/product')} className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors group">
                     <div className="p-2 rounded-lg bg-slate-800 group-hover:bg-slate-700 transition-colors"><ArrowLeft size={20} /></div>
                     <span className="font-medium">Back to Products</span>
                 </button>
                 
-                {/* --- Nút Delete mở Modal --- */}
                 {isOwner && (
                     <div className="flex gap-3">
                         <button 
-                            onClick={() => setShowDeleteModal(true)} // Mở modal xóa
+                            onClick={() => setShowDeleteModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg font-medium transition-all border border-red-500/20"
                         >
                             <Trash2 size={18} /> <span className="hidden sm:inline">Delete</span>
@@ -188,7 +194,6 @@ const ProductDetail = () => {
 
             <div className="p-6 md:px-10 pb-20 max-w-7xl mx-auto w-full">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
-                    {/* Cột trái */}
                     <div className="lg:col-span-5 space-y-6">
                         <div className="bg-[#1e293b] rounded-2xl border border-slate-700/50 p-2 shadow-xl shadow-black/20">
                             <div className="aspect-square w-full bg-slate-800 rounded-xl overflow-hidden relative flex items-center justify-center group">
@@ -204,7 +209,7 @@ const ProductDetail = () => {
                             <div className="bg-[#1e293b] p-4 rounded-xl border border-slate-700/50">
                                 <p className="text-slate-500 text-xs uppercase font-bold tracking-wider mb-2">Created by</p>
                                 <div className='flex items-center gap-3'>
-                                    <UserAvatar />
+                                    <UserAvatar user={uploaderForAvatar} size="md" />
                                     <div className="overflow-hidden">
                                         <span className='block text-white font-medium truncate'>{userName}</span>
                                         <span className='block text-slate-400 text-xs truncate'>{userEmail}</span>
@@ -227,7 +232,6 @@ const ProductDetail = () => {
                         </button>
                     </div>
 
-                    {/* Cột phải */}
                     <div className="lg:col-span-7 space-y-8">
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 leading-tight">{product.name}</h1>
@@ -339,7 +343,6 @@ const ProductDetail = () => {
                 )}
             </div>
 
-            {/* Modal Download (Giữ nguyên) */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div 
@@ -392,18 +395,14 @@ const ProductDetail = () => {
                 </div>
             )}
 
-            {/* --- 4. Giao diện Modal Delete --- */}
             {showDeleteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    {/* Backdrop */}
                     <div 
                         className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
                         onClick={() => !isDeleting && setShowDeleteModal(false)}
                     ></div>
 
-                    {/* Modal Content */}
                     <div className="relative bg-[#1e293b] border border-red-500/30 rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100 animate-in fade-in zoom-in duration-200">
-                        
                         <div className="text-center mb-6">
                             <div className="w-14 h-14 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <AlertTriangle size={32} />
@@ -441,7 +440,6 @@ const ProductDetail = () => {
                     </div>
                 </div>
             )}
-
         </main>
     );
 };

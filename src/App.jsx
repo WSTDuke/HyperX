@@ -34,20 +34,13 @@ function AppRoutes({ user }) {
       <Suspense fallback={<LazyLoading />}>
         <Routes>
           {routes.map((route, index) => {
-            // FIX: Đảm bảo truyền prop user cho Profile component 
-            // dù nó là private hay public route, nếu nó cần prop đó.
             const ElementComponent = route.private ? (
-              // Với route private, user được truyền qua ProtectedRoutee
               <ProtectedRoutee element={route.element} user={user} />
             ) : (
-              // VỚI CÁC ROUTE PUBLIC (ví dụ: Profile là public):
-              // Nếu route.element chính là Profile component, nó cần được truyền user
-              // Tuy nhiên, vì chúng ta không biết routes.js, đây là một điểm cần lưu ý.
-              // Nếu component Profile cần prop user, bạn phải truyền nó ở đây!
-              // Giả sử component Profile là một route public cần user:
-              route.path === '/profile'
-                ? <route.element user={user} /> // Nếu là Profile, truyền user
-                : <route.element /> // Các component khác không cần user
+              // SỬA ĐOẠN NÀY: Kiểm tra cả '/profile' VÀ '/setting'
+              ['/profile', '/setting'].includes(route.path) 
+                ? <route.element user={user} /> 
+                : <route.element />
             );
 
             return <Route key={index} path={route.path} element={ElementComponent} />;
