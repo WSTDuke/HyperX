@@ -31,8 +31,8 @@ const UserProfile = () => {
         postCount: 0, 
         likeCount: 0, 
         productCount: 0,
-        followerCount: 0, // Số người theo dõi user này
-        followingCount: 0 // Số người user này đang theo dõi
+        followerCount: 0, 
+        followingCount: 0 
     });
 
     const formatCurrency = (amount) => {
@@ -43,6 +43,8 @@ const UserProfile = () => {
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
+            
+            // Lấy thông tin user hiện tại (Bước 1 - không đồng bộ)
             const { data: { user } } = await supabase.auth.getUser();
             setCurrentUser(user);
             const targetUserId = id || user?.id;
@@ -53,15 +55,44 @@ const UserProfile = () => {
             }
 
             try {
-                // 1. Lấy Profile
-                const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', targetUserId).single();
-                if (profileError) throw profileError;
-                setProfile(profileData);
+                // 2. Lấy Profile (Cần thiết để lấy email cho sản phẩm)
+                const profilePromise = supabase.from('profiles').select('*').eq('id', targetUserId).single();
+                
+                // 3. Chuẩn bị các Promise song song
+                const postsPromise = supabase.from('community_posts').select('*, profiles(*)').eq('user_id', targetUserId).order('created_at', { ascending: false });
+                const followerCountPromise = supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
+                const followingCountPromise = supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
+                
+                // 4. Thực thi Profile và các Promise độc lập khác song song
+                const [
+                    { data: profileData, error: profileError }, 
+                    { data: postsData, error: postsError }, 
+                    { count: followerCount }, 
+                    { count: followingCount }
+                ] = await Promise.all([
+                    profilePromise,
+                    postsPromise,
+                    followerCountPromise,
+                    followingCountPromise,
+                ]);
 
-                // 2. Lấy Posts
-                const { data: postsData, error: postsError } = await supabase.from('community_posts').select('*, profiles(*)').eq('user_id', targetUserId).order('created_at', { ascending: false });
+                if (profileError) throw profileError;
                 if (postsError) throw postsError;
 
+                setProfile(profileData);
+
+                // 5. Lấy Products (Phụ thuộc vào email của profile)
+                let productsData = [];
+                let productCount = 0;
+                if (profileData?.email) {
+                    const { data: prodData, error: prodError } = await supabase.from('products').select('*').eq('email_upload', profileData.email).order('created_at', { ascending: false });
+                    if (prodError) throw prodError;
+                    productsData = prodData || [];
+                    productCount = productsData.length;
+                }
+                setProducts(productsData);
+
+                // 6. Xử lý Posts và Stats
                 const formattedPosts = postsData.map(post => ({
                     ...post,
                     raw_user_meta_data: { full_name: post.profiles?.full_name, avatar_url: post.profiles?.avatar_url },
@@ -69,27 +100,15 @@ const UserProfile = () => {
                 }));
                 setPosts(formattedPosts);
 
-                // 3. Lấy Products
-                const { data: productsData, error: productsError } = await supabase.from('products').select('*').eq('email_upload', profileData.email).order('created_at', { ascending: false });
-                if (productsError) throw productsError;
-                setProducts(productsData || []);
-
-                // 4. Lấy số liệu Followers / Following
-                // - Follower: Ai đang theo dõi user này (following_id = targetUserId)
-                const { count: followerCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId);
-                
-                // - Following: User này đang theo dõi ai (follower_id = targetUserId)
-                const { count: followingCount } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId);
-
                 setStats({
                     postCount: postsData.length,
-                    likeCount: postsData.reduce((acc, curr) => acc + (curr.like_count || 0), 0),
-                    productCount: productsData?.length || 0,
+                    likeCount: formattedPosts.reduce((acc, curr) => acc + (curr.like_count || 0), 0),
+                    productCount: productCount,
                     followerCount: followerCount || 0,
                     followingCount: followingCount || 0
                 });
 
-                // 5. Kiểm tra trạng thái Follow (Nếu đang xem profile người khác)
+                // 7. Kiểm tra trạng thái Follow (Nếu đang xem profile người khác) - Chạy song song
                 if (user && user.id !== targetUserId) {
                     const { data: followData } = await supabase
                         .from('follows')
@@ -113,6 +132,11 @@ const UserProfile = () => {
     const handleSignOut = async () => {
         await supabase.auth.signOut();
         navigate('/signin');
+    };
+
+    // Thêm logic cập nhật post sau khi chỉnh sửa
+    const handlePostUpdated = (updatedPost) => {
+        setPosts(prevPosts => prevPosts.map(p => p.id === updatedPost.id ? { ...p, ...updatedPost } : p));
     };
 
     const handlePostDeleted = (deletedPostId) => {
@@ -188,7 +212,7 @@ const UserProfile = () => {
                     <button onClick={() => setSelectedPostId(null)} className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors">
                         <ArrowLeft size={20} /> Back to Profile
                     </button>
-                    {selectedPost ? <PostItem key={selectedPost.id} post={selectedPost} currentUser={currentUser} onPostDeleted={handlePostDeleted} /> : <div className="text-center text-gray-500">Post not found</div>}
+                    {selectedPost ? <PostItem post={selectedPost} currentUser={currentUser} onPostDeleted={handlePostDeleted} onPostUpdated={handlePostUpdated} /> : <div className="text-center text-gray-500">Post not found</div>}
                 </div>
             </div>
         );
@@ -206,7 +230,7 @@ const UserProfile = () => {
                             <div className="p-1 bg-gray-900 rounded-full">
                                 <UserAvatar user={{ raw_user_meta_data: { avatar_url: profile.avatar_url, full_name: profile.full_name }, email: profile.email }} size="xl" className="w-32 h-32 text-4xl" />
                             </div>
-                            {isOwnProfile && <button onClick={() => navigate('/settings')} className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full text-white hover:bg-indigo-500 transition shadow-lg border-4 border-gray-900"><Edit3 size={16} /></button>}
+                            {isOwnProfile && <button onClick={() => navigate('/setting')} className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full text-white hover:bg-indigo-500 transition shadow-lg border-4 border-gray-900"><Edit3 size={16} /></button>}
                         </div>
                         <div className="flex-1 text-center md:text-left space-y-2 mb-2">
                             <h1 className="text-3xl font-bold text-white">{profile.full_name || "Unknown User"}</h1>
@@ -220,7 +244,7 @@ const UserProfile = () => {
                         <div className="flex flex-col gap-3 min-w-[140px]">
                             {isOwnProfile ? (
                                 <>
-                                    <button onClick={() => navigate('/settings')} className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
+                                    <button onClick={() => navigate('/setting')} className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition flex items-center justify-center gap-2">
                                         <Edit3 size={18} /> Edit Profile
                                     </button>
                                     <button onClick={handleSignOut} className="w-full py-2 px-4 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg font-medium transition flex items-center justify-center gap-2">
@@ -317,7 +341,8 @@ const UserProfile = () => {
                             <div className="grid gap-6">
                                 {posts.map(post => (
                                     <div key={post.id} className="relative group">
-                                        <PostItem post={post} currentUser={currentUser} onPostDeleted={handlePostDeleted} />
+                                        {/* Đã thêm onPostUpdated vào PostItem */}
+                                        <PostItem post={post} currentUser={currentUser} onPostDeleted={handlePostDeleted} onPostUpdated={handlePostUpdated} />
                                     </div>
                                 ))}
                             </div>

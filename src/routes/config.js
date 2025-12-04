@@ -13,11 +13,12 @@ import NewProduct from '../page/product/page/NewProduct';
 // Import ProductDetail
 import ProductDetail from '../page/product/page/ProductDetail'; 
 
-import Docs from '../page/docs/docs';
+import DocsPage from '../page/docs/Docs';
 import Setting from '../page/setting/Setting';
 import Community from '../page/community/CommunityPage';
 import UserProfile from '../page/profile/UserProfile';
 import PostDetail from '../page/community/PostDetail';
+import QandA from '../page/q&a/QandA';
 
 const routes = [
     {
@@ -58,7 +59,6 @@ const routes = [
         private: true,
         name: "Trang cá nhân",
     },
-    // 👇👇👇 QUAN TRỌNG: THÊM ROUTE NÀY ĐỂ XEM PROFILE NGƯỜI KHÁC 👇👇👇
     {
         path: "/profile/:id",
         element: UserProfile,
@@ -97,8 +97,14 @@ const routes = [
     // -----------------------------------------------------------
     {
         path: "/docs",
-        element: Docs, 
+        element: DocsPage, 
         name: "Tài liệu",
+    },
+    // -----------------------------------------------------------
+    {
+        path: "/q&a",
+        element: QandA, 
+        name: "Hỏi & Đáp",
     },
         // -----------------------------------------------------------
     {
