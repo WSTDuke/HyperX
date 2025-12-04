@@ -5,7 +5,7 @@ import IMGfinance from '../../assets/banking-symbol-financial-system-icon-circul
 import IMGconnect from '../../assets/OIP (1).webp'
 
 
-const DashboardBody_2 = () => {
+const HomeBody_2 = () => {
     return (
         <div>
             <div
@@ -78,4 +78,4 @@ const DashboardBody_2 = () => {
     )
 }
 
-export default DashboardBody_2
+export default HomeBody_2

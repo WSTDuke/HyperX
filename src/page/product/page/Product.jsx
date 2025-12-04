@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "../../../supabaseClient";
+import { supabase } from "../../../routes/supabaseClient";
 import ProductSidebar from "./ProductSidebar";
 import ProductList from "./ProductList";
 import { formatCurrency } from "./format";

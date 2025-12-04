@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../../../supabaseClient';
+import { supabase } from '../../../routes/supabaseClient';
 import {
     ArrowLeft, Package, Edit, Trash2,
     DollarSign, Clock, CheckCircle2, ArrowRight,

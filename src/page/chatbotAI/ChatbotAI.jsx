@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Send, Loader2, User, Bot, ClipboardCopy, Check } from "lucide-react"; 
-import { supabase } from '../../supabaseClient';
+import { supabase } from '../../routes/supabaseClient';
 
 // =======================================================
 // 0. COMPONENT UserAvatar

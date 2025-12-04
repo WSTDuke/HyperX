@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
-import LazyLoading from "../../LazyLoading";
+import { supabase } from "../../routes/supabaseClient";
+import LazyLoading from "../enhancements/LazyLoading";
 
 const AuthSignIn = () => {
     const navigate = useNavigate();

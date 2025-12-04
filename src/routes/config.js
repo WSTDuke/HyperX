@@ -3,7 +3,7 @@ import { lazy } from 'react';
 // ... Các import cũ giữ nguyên ...
 import AuthSignIn from '../page/auth/AuthSignIn';
 import AuthSignUp from '../page/auth/AuthSignUp';
-const Home = lazy(() => import('../page/dashboard/DashboardPage'));
+const Home = lazy(() => import('../page/Home/Home'));
 import NotFound from '../page/notfound/NotFound'
 import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
@@ -23,6 +23,12 @@ import ChatbotAIPage from '../page/chatbotAI/ChatbotAI';
 const routes = [
     {
         path: "/",
+        element: Home,
+        exact: true,
+        name: "Trang Chủ",
+    },
+    {
+        path: "/home",
         element: Home,
         exact: true,
         name: "Trang Chủ",

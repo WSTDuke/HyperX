@@ -3,9 +3,9 @@ import routes from './routes/config';
 import { useEffect, useState, Suspense } from 'react';
 import Header from './layouts/Header';
 import Footer from './layouts/Footer';
-import { supabase } from './supabaseClient';
-import LazyLoading from './LazyLoading';
-import ScrollToTop from './ScrollTop';
+import { supabase } from './routes/supabaseClient'
+import LazyLoading from './page/enhancements/LazyLoading';
+import ScrollToTop from './page/enhancements/ScrollTop';
 
 // Bạn cần đảm bảo ProtectedRoutee được định nghĩa đúng cách 
 // và truyền prop user xuống cho component con.
@@ -28,7 +28,7 @@ function AppRoutes({ user }) {
   const hideHeaderPaths = ['/signin', '/signup', '/verify', '/auth/callback'];
   
   // Các path cần ẩn Footer 
-  const pathsToHideFooter = [...hideHeaderPaths, '/chatbot-ai','/community','/product'];
+  const pathsToHideFooter = [...hideHeaderPaths, '/chatbot-ai','/community','/product','/docs', '/create-product','/edit-product/:id','/product/:id','/profile','/profile/:id','/setting'];
 
   // Logic truyền user (đã sửa ở lần trước, giữ lại)
   const pathsRequiringUserProp = ['/profile', '/profile/:id', '/setting', '/chatbot-ai']; 

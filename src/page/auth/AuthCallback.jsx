@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 import { useNavigate } from "react-router-dom";
-import LazyLoading from "../../LazyLoading";
+import LazyLoading from "../enhancements/LazyLoading";
 
 export default function AuthCallback() {
     const navigate = useNavigate();

@@ -8,8 +8,8 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'; // 👈 I
 import { HeartIcon, ChatBubbleLeftIcon, UserPlusIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import LazyLoading from '../LazyLoading';
+import { supabase } from '../routes/supabaseClient'
+import LazyLoading from '../page/enhancements/LazyLoading';
 import UserAvatar from '../page/community/UserAvatar';
 import {AtSymbolIcon } from '@heroicons/react/24/outline';
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 import PostItem from "./PostItem"; // Import component PostItem bạn đang có
 import { ArrowLeft } from "lucide-react";
 

@@ -1,6 +1,6 @@
 import { Package, Upload, User, CheckCircle, ArrowRight, ArrowLeft, X, Monitor, Image as ImageIcon } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../../supabaseClient';
+import { supabase } from '../../../routes/supabaseClient';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 const NewProduct = () => {

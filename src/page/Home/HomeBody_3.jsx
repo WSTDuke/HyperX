@@ -1,6 +1,6 @@
 import React from 'react'
 
-const DashboardBody_3 = () => {
+const HomeBody_3 = () => {
     return (
         <div>
             <div className="bg-gray-900 py-24 sm:py-32">
@@ -103,4 +103,4 @@ const DashboardBody_3 = () => {
     )
 }
 
-export default DashboardBody_3
+export default HomeBody_3

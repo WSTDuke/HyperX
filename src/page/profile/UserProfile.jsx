@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 import UserAvatar from "../community/UserAvatar";
 import PostItem from "../community/PostItem";
 import { 

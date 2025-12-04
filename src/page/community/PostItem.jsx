@@ -4,7 +4,7 @@ import UserAvatar from "./UserAvatar";
 import formatTime from "./formatTime";
 import { Heart, MessageCircle, MoreVertical, Send, Trash2 } from "lucide-react";
 import DeleteConfirmModal from "./DeleteConfirmModal";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 import PostFormModal from "./PostFormModal";
 
 // --- SUB-COMPONENT: CommentItem ---

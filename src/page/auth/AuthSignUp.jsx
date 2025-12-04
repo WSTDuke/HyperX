@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 
 const AuthSignUp = () => {
     const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-const DashboardBody_4 = () => {
+const HomeBody_1 = () => {
     return (
         <div className="relative isolate px-6 pt-14 lg:px-8">
             <div
@@ -20,19 +20,21 @@ const DashboardBody_4 = () => {
 
                 <div className="text-center">
                     <h1 className="text-5xl font-semibold tracking-tight text-balance text-white sm:text-6xl">
-                        Focusing on Streamlining the Process
+                        Publish your software. Reach the world.
                     </h1>
                     <p className="mt-8 text-lg font-medium text-pretty text-gray-400 sm:text-xl/8">
-                        Streamline Your Journey from Code to Community. We Handle Distribution, So You Focus on Creation.
+                        Streamline your journey from code to community. We handle distribution so you focus on creation.
                     </p>
-                    <div className="mt-10 flex items-center justify-center gap-x-6">
+                    <div className="mt-6 flex items-center justify-center gap-x-6">
                         <Link
-                            to="/product"
-                            className="rounded-md bg-indigo-500 px-8 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                            to="/community"
+                            className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                         >
                             Get started
                         </Link>
-
+                        <Link to="/docs" className="text-sm/6 font-semibold text-white">
+                            Learn more <span aria-hidden="true">→</span>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -52,4 +54,4 @@ const DashboardBody_4 = () => {
     )
 }
 
-export default DashboardBody_4
+export default HomeBody_1

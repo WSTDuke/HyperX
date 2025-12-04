@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 import {Search} from "lucide-react";
 import { Link } from "react-router-dom";
 import PostFormModal from "./PostFormModal";

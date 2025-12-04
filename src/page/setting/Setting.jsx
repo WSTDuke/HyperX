@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"; // Thêm useRef
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../routes/supabaseClient";
 
 const Setting = ({ user }) => {
     const [currentUser, setCurrentUser] = useState(null);
