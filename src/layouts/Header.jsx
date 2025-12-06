@@ -178,7 +178,7 @@ const Header = ({ user }) => {
 
     const getNotiIcon = (type) => {
         switch (type) {
-            case 'like_post': return <HeartIcon className="w-4 h-4 text-pink-500" />;
+            case 'like_post': return <HeartIcon className="w-4 h-4 text-red-500" />;
             case 'comment': return <ChatBubbleLeftIcon className="w-4 h-4 text-blue-500" />;
             case 'follow': return <UserPlusIcon className="w-4 h-4 text-green-500" />;
             case 'mention': return <AtSymbolIcon className="w-4 h-4 text-orange-500" />; 

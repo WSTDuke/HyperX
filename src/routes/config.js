@@ -3,7 +3,6 @@ import { lazy } from 'react';
 // ... Các import cũ giữ nguyên ...
 import AuthSignIn from '../page/auth/AuthSignIn';
 import AuthSignUp from '../page/auth/AuthSignUp';
-const Home = lazy(() => import('../page/Home/Home'));
 import NotFound from '../page/notfound/NotFound'
 import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
@@ -18,7 +17,42 @@ import Setting from '../page/setting/Setting';
 import Community from '../page/community/CommunityPage';
 import UserProfile from '../page/profile/UserProfile';
 import PostDetail from '../page/community/PostDetail';
-import ChatbotAIPage from '../page/chatbotAI/ChatbotAI';
+
+// --- BỔ SUNG: HÀM DELAY IMPORT ---
+/**
+ * Tạo một hàm lazy load với độ trễ tối thiểu (minimum delay)
+ * @param {function} factory Hàm import() component
+ * @param {number} delay_ms Thời gian delay tối thiểu tính bằng mili giây (ms)
+ * @returns {Promise<object>}
+ */
+const delayImport = (factory, delay_ms) => {
+    return new Promise((resolve) => {
+        const startTime = Date.now();
+        
+        factory().then((module) => {
+            const timeElapsed = Date.now() - startTime;
+            const remainingDelay = delay_ms - timeElapsed;
+            
+            if (remainingDelay > 0) {
+                // Nếu thời gian tải quá nhanh, chờ nốt phần còn lại của delay
+                setTimeout(() => resolve(module), remainingDelay);
+            } else {
+                // Nếu thời gian tải đã vượt quá delay, resolve ngay lập tức
+                resolve(module);
+            }
+        });
+    });
+};
+
+// Đặt độ trễ tối thiểu là 500ms (0.5 giây)
+const MINIMUM_LOAD_DELAY = 500; 
+
+// --- CẬP NHẬT CÁCH LAZY LOAD CHATBOT VÀ CÁC COMPONENT KHÁC ---
+const Home = lazy(() => delayImport(() => import('../page/Home/Home'), MINIMUM_LOAD_DELAY));
+const ChatbotAIPage = lazy(() => delayImport(
+    () => import('../page/chatbotAI/ChatbotAI'), 
+    MINIMUM_LOAD_DELAY
+));
 
 const routes = [
     {
@@ -33,7 +67,7 @@ const routes = [
         exact: true,
         name: "Trang Chủ",
     },
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     {
         path: "/signin",
         element: AuthSignIn,
@@ -56,7 +90,7 @@ const routes = [
         element: AuthCallback,
         name: "Xác thực người dùng",
     },
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     
     // === PHẦN PROFILE (Cần 2 routes) ===
     {
@@ -72,7 +106,7 @@ const routes = [
         name: "Trang cá nhân người dùng",
     },
 
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     {
         path: "/product",
         element: Product,
@@ -88,14 +122,14 @@ const routes = [
     
     {
         path: "/product/edit/:id", 
-        element: NewProduct,      
+        element: NewProduct,        
         private: true,
         name: "Sửa sản phẩm",
     },
 
     {
         path: "/product/:id", 
-        element: ProductDetail,   
+        element: ProductDetail,     
         private: true,
         name: "Chi tiết sản phẩm",
     },
@@ -112,14 +146,14 @@ const routes = [
         element: ChatbotAIPage, 
         name: "Chatbot AI",
     },
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     {
         path: "/setting",
         element: Setting, 
         private: true,
         name: "Cài đặt",
     },
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     {
         path: "/community",
         element: Community,
@@ -132,7 +166,7 @@ const routes = [
         private: true,      // Yêu cầu đăng nhập mới xem được (tùy bạn chọn)
         name: "Chi tiết bài viết",
     },
-        // -----------------------------------------------------------
+    // -----------------------------------------------------------
     {
         path: "*",
         element: NotFound,
