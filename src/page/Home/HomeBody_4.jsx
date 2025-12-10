@@ -3,50 +3,61 @@ import { Link } from 'react-router-dom'
 
 const HomeBody_4 = () => {
     return (
-        <div className="relative isolate px-6 pt-14 lg:px-8">
-            <div
+        // 1. Thêm 'flex items-center justify-center' để căn giữa nội dung theo chiều dọc
+        // 2. Giữ 'h-screen' để chiếm toàn bộ chiều cao màn hình
+        <div className="relative isolate overflow-hidden h-screen flex items-center justify-center bg-gray-900/40 border-t border-white/10 backdrop-blur-lg">
+            
+            {/* --- BACKGROUND EFFECTS --- */}
+            
+            {/* A. KHỐI SÁNG TỪ TRÊN XUỐNG (Spotlight Effect) */}
+            {/* Khối này nằm ở top-0, giữa màn hình, tỏa ánh sáng Indigo xuống dưới */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-indigo-500/20 blur-[120px] rounded-b-full pointer-events-none -z-10"></div>
+
+            {/* B. Grid Pattern (Làm mờ bớt để không tranh chấp với ánh sáng trên) */}
+            <svg
+                viewBox="0 0 1024 1024"
+                className="absolute left-1/2 top-1/2 -z-20 h-[80rem] w-[80rem] -translate-x-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] opacity-60"
                 aria-hidden="true"
-                className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
             >
-                <div
-                    style={{
-                        clipPath:
-                            'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                    className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-288.75"
-                />
-            </div>
-            <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+                <circle cx={512} cy={512} r={512} fill="url(#gradient-cta)" fillOpacity="0.4" />
+                <defs>
+                    <radialGradient id="gradient-cta">
+                        <stop stopColor="#6366f1" /> {/* Indigo */}
+                        <stop offset={1} stopColor="#a855f7" /> {/* Purple */}
+                    </radialGradient>
+                </defs>
+            </svg>
 
-                <div className="text-center">
-                    <h1 className="text-5xl font-semibold tracking-tight text-balance text-white sm:text-6xl">
-                        Focusing on Streamlining the Process
-                    </h1>
-                    <p className="mt-8 text-lg font-medium text-pretty text-gray-400 sm:text-xl/8">
-                        Streamline Your Journey from Code to Community. We Handle Distribution, So You Focus on Creation.
-                    </p>
-                    <div className="mt-10 flex items-center justify-center gap-x-6">
-                        <Link
-                            to="/product"
-                            className="rounded-md bg-indigo-500 px-8 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                        >
-                            Get started
-                        </Link>
-
-                    </div>
+            {/* --- NỘI DUNG CHÍNH (Đã được căn giữa nhờ Flexbox ở thẻ cha) --- */}
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 relative z-10 text-center">
+                
+                <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-8">
+                    Ready to Streamline Your Workflow? <br />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-b from-white via-indigo-200 to-indigo-400">
+                        Join the revolution today.
+                    </span>
+                </h2>
+                
+                <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-300 font-light">
+                    Stop wrestling with distribution infrastructure. Focus on what you do best: Creating amazing software. We handle the rest.
+                </p>
+                
+                <div className="mt-12 flex items-center justify-center gap-x-8">
+                    {/* Nút chính */}
+                    <Link
+                        to="/product"
+                        className="group relative rounded-full bg-white px-12 py-4 text-base font-bold text-gray-900 shadow-[0_0_40px_-10px_rgba(99,102,241,0.5)] hover:shadow-[0_0_60px_-15px_rgba(99,102,241,0.7)] hover:scale-105 transition-all duration-300"
+                    >
+                        <span className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 opacity-0 group-hover:opacity-10 transition-opacity" />
+                        Get Started Free
+                    </Link>
+                    
+                    {/* Nút phụ */}
+                    <Link to="/docs" className="group text-base font-semibold leading-6 text-white flex items-center gap-2 hover:text-indigo-300 transition-colors">
+                        Contact Sales <span aria-hidden="true" className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                    </Link>
                 </div>
-            </div>
-            <div
-                aria-hidden="true"
-                className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-            >
-                <div
-                    style={{
-                        clipPath:
-                            'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                    className="relative left-[calc(50%+3rem)] aspect-1155/678 w-144.5 -translate-x-1/2 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-288.75"
-                />
+
             </div>
         </div>
     )

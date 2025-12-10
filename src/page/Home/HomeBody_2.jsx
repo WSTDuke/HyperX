@@ -1,81 +1,74 @@
 import React from 'react'
+// Đảm bảo đường dẫn ảnh đúng với project của bạn
 import IMGgame from '../../assets/OIP.webp'
 import IMGapp from '../../assets/mexicanas-580x385.jpg'
 import IMGfinance from '../../assets/banking-symbol-financial-system-icon-circulation-vector-2500843-15654281304022058063886-crop-15654281627291067117848-crop-1565428177047472866763.jpg'
 import IMGconnect from '../../assets/OIP (1).webp'
 
-
 const HomeBody_2 = () => {
     return (
-        <div>
-            <div
-                aria-hidden="true"
-                className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-            >
-                <div
-                    style={{
-                        clipPath:
-                            'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                    className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-288.75"
-                />
-            </div>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center">
-                    <div>
-                        <h1 className="text-4xl sm:text-5xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
-                            We're changing the way people connect
-                        </h1>
-                        <p className="text-lg text-gray-400 mb-8 max-w-lg leading-relaxed">
-                            Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat. Anim aute id magna aliqua ad ad non deserunt sunt.
-                        </p>
-                    </div>
+        <div className="relative isolate">
+            
+            {/* LIGHTING: 2 Bên hông (Side Glows) */}
+            {/* Trái: Indigo */}
+            <div className="absolute top-1/2 -left-64 -z-10 h-[40rem] w-[40rem] -translate-y-1/2 rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none"></div>
+            {/* Phải: Purple */}
+            <div className="absolute top-1/2 -right-64 -z-10 h-[40rem] w-[40rem] -translate-y-1/2 rounded-full bg-purple-600/20 blur-[120px] pointer-events-none"></div>
 
-                    <div className="relative">
-                        <div className="space-y-4">
-                            <div className="flex items-end justify-end space-x-4">
-                                <div className="relative w-2/3 h-60 rounded-xl overflow-hidden shadow-2xl">
-                                    <img
-                                        className="absolute inset-0 h-full w-full object-cover"
-                                        src={IMGgame}
-                                        alt="Presentation on whiteboard"
-                                    />
-                                </div>
-                                <div className="relative w-1/3 h-60 rounded-xl overflow-hidden shadow-2xl">
-                                    <img
-                                        className="absolute inset-0 h-full w-full object-cover"
-                                        src={IMGapp}
-                                        alt="Man smiling"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex space-x-4">
-                                <div className="relative w-1/2 h-60 rounded-xl overflow-hidden shadow-2xl">
-                                    <img
-                                        className="absolute inset-0 h-full w-full object-cover"
-                                        src={IMGconnect}
-                                        alt="Woman working on laptop"
-                                    />
-                                </div>
-                                <div className="relative w-1/2 h-60 rounded-xl overflow-hidden shadow-2xl">
-                                    <img
-                                        className="absolute inset-0 h-full w-full object-cover"
-                                        src={IMGfinance}
-                                        alt="People collaborating in office"
-                                    />
-                                </div>
-                            </div>
-
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 py-24 lg:py-32">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    
+                    {/* Text Content */}
+                    <div className="lg:pr-8">
+                        <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-sm font-medium text-indigo-300 mb-6 backdrop-blur-md">
+                            <span>Global Connectivity</span>
                         </div>
-
-                        <div className="absolute top-0 right-0 w-1/4 h-full bg-gradient-to-l from-[#111327] to-transparent pointer-events-none" aria-hidden="true"></div>
+                        <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6">
+                            Redefining Human Interaction.
+                        </h2>
+                        <p className="text-lg leading-8 text-gray-400 mb-8 border-l-2 border-indigo-500 pl-6">
+                            We are not just building apps; we are weaving the digital fabric of tomorrow. From finance to entertainment, experience seamless integration across all your devices.
+                        </p>
+                        
+                        <div className="flex gap-8 border-t border-white/10 pt-8">
+                            {[
+                                { val: '50M+', label: 'Users' },
+                                { val: '99.9%', label: 'Uptime' },
+                                { val: '24/7', label: 'Support' }
+                            ].map((stat, idx) => (
+                                <div key={idx}>
+                                    <h3 className="text-2xl font-bold text-white">{stat.val}</h3>
+                                    <p className="text-sm text-gray-500 mt-1 uppercase tracking-wider">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
+                    {/* Image Grid - Glass Style */}
+                    <div className="relative">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-4 pt-12">
+                                <CardImage src={IMGgame} alt="Gaming" height="h-48" />
+                                <CardImage src={IMGapp} alt="App" height="h-64" />
+                            </div>
+                            <div className="space-y-4">
+                                <CardImage src={IMGfinance} alt="Finance" height="h-64" />
+                                <CardImage src={IMGconnect} alt="Connect" height="h-48" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
             </div>
         </div>
     )
 }
+
+// Component con để tái sử dụng style ảnh Glassmorphism
+const CardImage = ({ src, alt, height }) => (
+    <div className={`relative overflow-hidden rounded-2xl bg-white/5 border border-white/10 shadow-2xl hover:scale-[1.02] transition-transform duration-500 group`}>
+        <div className="absolute inset-0 bg-indigo-500/10 mix-blend-overlay group-hover:bg-indigo-500/0 transition-colors"></div>
+        <img src={src} alt={alt} className={`${height} w-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-500`} />
+    </div>
+)
 
 export default HomeBody_2

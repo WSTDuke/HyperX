@@ -1,10 +1,10 @@
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react'; // 👈 Import Transition và TransitionChild
+import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 import { 
     Bars3Icon, XMarkIcon, UserIcon, QuestionMarkCircleIcon, 
     Cog6ToothIcon, ArrowRightOnRectangleIcon, BellIcon, CheckCircleIcon,
-    TrashIcon // 👈 Import TrashIcon
+    TrashIcon 
 } from '@heroicons/react/24/outline';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'; // 👈 Import icon cho Modal
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { HeartIcon, ChatBubbleLeftIcon, UserPlusIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
@@ -45,7 +45,7 @@ const Header = ({ user }) => {
 
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 50);
+        const handleScroll = () => setScrolled(window.scrollY > 20); // Giảm ngưỡng scroll xuống 20 để nhạy hơn
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -197,7 +197,8 @@ const Header = ({ user }) => {
         }
     };
 
-    const headerClasses = `fixed inset-x-0 top-0 z-50 transition-all duration-300 backdrop-blur-md ${scrolled ? 'bg-gray-900/90 shadow-lg' : 'bg-transparent'}`;
+    // --- STYLE HEADER MỚI ---
+    const headerClasses = `fixed inset-x-0 top-0 z-50 transition-all duration-500 backdrop-blur-xl border-b border-transparent ${scrolled ? 'bg-[#0f111a]/80 shadow-2xl border-white/5' : 'bg-transparent'}`;
 
     return (
         <header className={headerClasses}>
@@ -205,34 +206,40 @@ const Header = ({ user }) => {
             
             {/* -------------------- 1. HEADER NAV BAR -------------------- */}
             <nav className="flex items-center justify-between p-6 lg:px-8">
-                {/* ... (Giữ nguyên phần Logo, Navigation Links, Mobile Menu Button) ... */}
-
+                {/* Logo Area */}
                 <div className="flex lg:flex-1">
-                    <Link to="/" className="-m-1.5 p-1.5">
-                        <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">HyperX</span>
+                    <Link to="/" className="-m-1.5 p-1.5 group">
+                         {/* Thêm hiệu ứng hover nhẹ cho logo */}
+                        <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent group-hover:to-indigo-400 transition-all">HyperX</span>
                     </Link>
                 </div>
 
+                {/* Mobile Menu Button */}
                 <div className="flex lg:hidden">
-                    <button type="button" onClick={() => setMobileMenuOpen(true)} className="-m-2.5 rounded-md p-2.5 text-gray-200">
+                    <button type="button" onClick={() => setMobileMenuOpen(true)} className="-m-2.5 rounded-md p-2.5 text-gray-200 hover:text-white transition-colors">
                         <span className="sr-only">Open main menu</span>
                         <Bars3Icon className="w-6 h-6" aria-hidden="true" />
                     </button>
                 </div>
 
+                {/* Desktop Navigation Links - STYLE MỚI: Dot Indicator */}
                 <div className="hidden lg:flex lg:gap-x-12 relative">
                     {navigation.map((item) => (
                         <NavLink key={item.name} to={item.href} className="relative group py-2">
                             {({ isActive }) => (
                                 <>
-                                    <span className={`text-sm font-semibold transition-colors ${isActive ? 'text-indigo-400' : 'text-white group-hover:text-indigo-400'}`}>{item.name}</span>
-                                    <span className={`absolute left-0 bottom-0 h-0.5 w-full bg-gradient-to-r from-indigo-400 to-pink-500 transition-transform duration-300 origin-bottom-left ${isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`} />
+                                    <span className={`text-sm font-semibold transition-colors duration-300 ${isActive ? 'text-indigo-400' : 'text-gray-300 group-hover:text-white'}`}>{item.name}</span>
+                                    {/* Dấu chấm phát sáng thay vì gạch chân */}
+                                    {isActive && (
+                                        <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)]"></span>
+                                    )}
                                 </>
                             )}
                         </NavLink>
                     ))}
                 </div>
 
+                {/* Right Side Actions */}
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center gap-4 relative">
                     {user ? (
                         <>
@@ -240,11 +247,11 @@ const Header = ({ user }) => {
                             <div className="relative" ref={notiRef}>
                                 <button 
                                     onClick={() => setNotiOpen(!notiOpen)}
-                                    className={`relative p-2 transition-colors rounded-full hover:bg-gray-800 ${notiOpen ? 'text-white bg-gray-800' : 'text-gray-300 hover:text-white'}`}
+                                    className={`relative p-2 transition-colors rounded-full hover:bg-white/10 ${notiOpen ? 'text-white bg-white/10' : 'text-gray-300 hover:text-white'}`}
                                 >
                                     <BellIcon className="w-6 h-6" />
                                     {unreadCount > 0 && (
-                                        <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse border-2 border-gray-900">
+                                        <span className="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white animate-pulse border-2 border-[#0f111a]">
                                             {unreadCount > 9 ? '9+' : unreadCount}
                                         </span>
                                     )}
@@ -312,20 +319,19 @@ const Header = ({ user }) => {
                                 )}
                             </div>
 
-                            {/* --- USER AVATAR --- (Giữ nguyên) */}
-                            {/* ... */}
+                            {/* --- USER AVATAR --- */}
                             <div className="relative" ref={dropdownRef}>
                                 <img
                                     src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user.email}`}
                                     alt="User Avatar"
-                                    className="w-9 h-9 rounded-full border-2 border-indigo-500 cursor-pointer hover:scale-105 transition-transform shadow-lg shadow-indigo-500/20"
+                                    className="w-9 h-9 rounded-full border-2 border-indigo-500/50 cursor-pointer hover:scale-105 transition-transform shadow-lg shadow-indigo-500/20"
                                     onClick={() => setDropdownOpen((prev) => !prev)}
                                 />
                                 {dropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-64 rounded-xl bg-[#1e293b] shadow-2xl ring-1 ring-black ring-opacity-5 py-1 z-50 animate-in fade-in zoom-in duration-150 border border-gray-700">
                                         <div className="px-4 py-3 border-b border-gray-700 mb-1 bg-gray-800/50 rounded-t-xl">
                                             <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Signed in as</p>
-                                            <div className='flex flex-rơ justify-center items-center gap-2 my-2'>
+                                            <div className='flex flex-row justify-center items-center gap-2 my-2'>
                                                    <img
                                                    src={user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${user.email}`}
                                                    alt="User Avatar"
@@ -355,8 +361,8 @@ const Header = ({ user }) => {
                         </>
                     ) : (
                         <>
-                            <Link to="/signup" className="text-sm font-semibold text-white border-r border-gray-600 mr-6 pr-6 hover:text-indigo-400 transition-colors">Sign up</Link>
-                            <Link to="/signin" className="px-4 py-2 rounded-lg bg-indigo-600 text-sm font-semibold text-white hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Sign in</Link>
+                            <Link to="/signup" className="text-sm font-semibold text-white border-r border-white/10 mr-6 pr-6 hover:text-indigo-400 transition-colors">Sign up</Link>
+                            <Link to="/signin" className="px-5 py-2 rounded-full bg-indigo-600 text-sm font-bold text-white hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/30 active:scale-95">Sign in</Link>
                         </>
                     )}
                 </div>

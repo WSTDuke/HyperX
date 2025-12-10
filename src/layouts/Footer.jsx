@@ -1,51 +1,71 @@
+import { FacebookIcon, GithubIcon, Instagram, InstagramIcon, TwitterIcon } from 'lucide-react'
 import React from 'react'
 
 const Footer = () => {
     return (
-        <footer className="bg-[#1a1c29] flex flex-col text-gray-300 py-12 px-6 lg:px-16 gap-8 border-t border-gray-700 bg-gray-900 ">
-            <div className="lg:col-span-1 flex justify-start lg:justify-center mb-6 lg:mb-0">
-                <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
-                    HyperX
-                </span>
+        <footer className="relative bg-[#0f111a] text-gray-400 border-t border-gray-800 overflow-hidden">
+            {/* Background Logo watermark */}
+            <div className="absolute -bottom-10 -right-10 select-none opacity-5 pointer-events-none">
+                 <span className="text-[15rem] font-bold text-white">HX</span>
             </div>
-            <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-64">
-                <div>
-                    <h3 className="text-white font-semibold text-lg mb-4">Solutions</h3>
-                    <ul className="space-y-2">
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Marketing</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Analytics</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Automation</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Commerce</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Insights</a></li>
-                    </ul>
-                </div>
 
-                <div>
-                    <h3 className="text-white font-semibold text-lg mb-4">Support</h3>
-                    <ul className="space-y-2">
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Submit ticket</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Documentation</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Guides</a></li>
-                    </ul>
+            <div className="mx-auto max-w-7xl px-6 py-16 sm:py-24 lg:px-8 lg:py-32">
+                <div className="xl:grid xl:grid-cols-3 xl:gap-8">
+                    <div className="space-y-8">
+                        <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
+                            HyperX
+                        </span>
+                        <p className="text-sm leading-6 text-gray-400 max-w-xs">
+                            Empowering developers to build the future, one line of code at a time.
+                        </p>
+                        <div className="flex space-x-6">
+                            {/* Social Placeholders - có thể thêm icon thật vào đây */}
+                            <a href="https://www.facebook.com/duke7925" className="text-gray-500 hover:text-white transition-colors"><FacebookIcon /></a>
+                            <a href="https://www.instagram.com/duke.nd_/" className="text-gray-500 hover:text-white transition-colors"><InstagramIcon /></a>
+                            <a href="https://github.com/dukeWst" className="text-gray-500 hover:text-white transition-colors"><GithubIcon /></a>
+                        </div>
+                    </div>
+                    <div className="mt-16 grid grid-cols-2 gap-8 xl:col-span-2 xl:mt-0">
+                        <div className="md:grid md:grid-cols-2 md:gap-8">
+                            <div>
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Solutions</h3>
+                                <ul role="list" className="mt-6 space-y-4">
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Marketing</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Analytics</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Commerce</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Insights</a></li>
+                                </ul>
+                            </div>
+                            <div className="mt-10 md:mt-0">
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Support</h3>
+                                <ul role="list" className="mt-6 space-y-4">
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Submit ticket</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Documentation</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">API Status</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div className="md:grid md:grid-cols-2 md:gap-8">
+                            <div>
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Company</h3>
+                                <ul role="list" className="mt-6 space-y-4">
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">About</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Blog</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Jobs</a></li>
+                                </ul>
+                            </div>
+                            <div className="mt-10 md:mt-0">
+                                <h3 className="text-sm font-semibold leading-6 text-white uppercase tracking-wider">Legal</h3>
+                                <ul role="list" className="mt-6 space-y-4">
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Privacy</a></li>
+                                    <li><a href="#" className="text-sm leading-6 hover:text-indigo-400 transition-colors">Terms</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <div>
-                    <h3 className="text-white font-semibold text-lg mb-4">Company</h3>
-                    <ul className="space-y-2">
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">About</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Blog</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Jobs</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Press</a></li>
-                    </ul>
-                </div>
-
-                <div>
-                    <h3 className="text-white font-semibold text-lg mb-4">Legal</h3>
-                    <ul className="space-y-2">
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Terms of service</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">Privacy policy</a></li>
-                        <li><a href="#" className="hover:text-indigo-400 transition-colors duration-200">License</a></li>
-                    </ul>
+                <div className="mt-16 border-t border-gray-800 pt-8 sm:mt-20 lg:mt-24">
+                    <p className="text-xs leading-5 text-gray-500">&copy; 2025 HyperX, Inc. All rights reserved.</p>
                 </div>
             </div>
         </footer>
