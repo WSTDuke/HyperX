@@ -330,7 +330,7 @@ const Header = ({ user }) => {
                                             <Link to="/profile" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg gap-3 transition-colors" onClick={() => setDropdownOpen(false)}>
                                                 <UserIcon className="w-4.5 h-4.5 text-gray-500" /> Profile
                                             </Link>
-                                            <Link to="/help" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg gap-3 transition-colors" onClick={() => setDropdownOpen(false)}>
+                                            <Link to="/support" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg gap-3 transition-colors" onClick={() => setDropdownOpen(false)}>
                                                 <QuestionMarkCircleIcon className="w-4.5 h-4.5 text-gray-500" /> Help & Support
                                             </Link>
                                             <Link to="/setting" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg gap-3 transition-colors" onClick={() => setDropdownOpen(false)}>

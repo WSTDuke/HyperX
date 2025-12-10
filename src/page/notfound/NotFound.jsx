@@ -37,7 +37,7 @@ const NotFound = () => {
                         >
                             Back to home
                         </Link>
-                        <Link to="/contact" className="text-sm font-semibold leading-6 text-white hover:text-indigo-400 transition-colors">
+                        <Link to="/support" className="text-sm font-semibold leading-6 text-white hover:text-indigo-400 transition-colors">
                             Contact support <span aria-hidden="true">&rarr;</span>
                         </Link>
                     </div>

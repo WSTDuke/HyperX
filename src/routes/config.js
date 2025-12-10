@@ -17,6 +17,7 @@ import Setting from '../page/setting/Setting';
 import Community from '../page/community/CommunityPage';
 import UserProfile from '../page/profile/UserProfile';
 import PostDetail from '../page/community/PostDetail';
+import HelpAndSupport from '../page/help&support/HelpAndSupport';
 
 // --- BỔ SUNG: HÀM DELAY IMPORT ---
 /**
@@ -161,10 +162,16 @@ const routes = [
         name: "Cộng đồng",
     },
     {
-        path: "/post/:id",  // Đường dẫn chi tiết bài viết
+        path: "/post/:id",  
         element: PostDetail,
-        private: true,      // Yêu cầu đăng nhập mới xem được (tùy bạn chọn)
+        private: true,      
         name: "Chi tiết bài viết",
+    },
+    {
+        path: "/support",  
+        element: HelpAndSupport,
+        private: true,      
+        name: "Hỗ trợ",
     },
     // -----------------------------------------------------------
     {
