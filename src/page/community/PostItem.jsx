@@ -2,7 +2,7 @@ import React, { useEffect, useState, memo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import UserAvatar from "./UserAvatar";
 import formatTime from "./formatTime";
-import { Heart, MessageCircle, MoreVertical, Send, Trash2 } from "lucide-react";
+import { Edit, EditIcon, Heart, MessageCircle, MoreVertical, Send, Trash2 } from "lucide-react";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import { supabase } from "../../routes/supabaseClient";
 import PostFormModal from "./PostFormModal";
@@ -16,13 +16,11 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     const [isSendingReply, setIsSendingReply] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
 
-    // --- LOGIC HIGHLIGHT ---
     const commentRef = React.useRef(null);
     const [isHighlighted, setIsHighlighted] = useState(false);
 
-    // Định nghĩa biến paddingLeftValue (Khắc phục lỗi "is not defined")
     const indentLevel = depth > 2 ? 2 : depth;
-    const paddingLeftValue = indentLevel * 36;
+    const paddingLeftValue = indentLevel * 24; // Giảm padding chút cho mobile
     const childComments = allComments.filter(c => c.parent_id === comment.id);
 
     useEffect(() => {
@@ -30,14 +28,12 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
             setTimeout(() => {
                 commentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
-            
             setIsHighlighted(true);
             const timer = setTimeout(() => setIsHighlighted(false), 1000); 
             return () => clearTimeout(timer);
         }
     }, [highlightId, comment.id]);
 
-    // Load Likes
     useEffect(() => {
         if (!currentUser) return;
         const checkLike = async () => {
@@ -60,7 +56,6 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
         }
     };
 
-    // --- Logic Reply ---
     const handleToggleReply = () => {
         if (!currentUser) return alert("Please log in.");
         if (!showReplyInput) {
@@ -89,82 +84,66 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     return (
         <div className="flex flex-col" ref={commentRef}>
             <div 
-                className={`flex gap-3 group relative p-2 rounded-xl transition-all duration-1000 ease-in-out
-                    ${isHighlighted ? 'bg-indigo-500/20 ring-1 ring-indigo-500' : ''} 
+                className={`flex gap-3 group relative p-3 rounded-xl transition-all duration-500 ease-in-out border border-transparent
+                    ${isHighlighted ? 'bg-indigo-500/10 border-indigo-500/30' : 'hover:bg-white/5'} 
                 `}
                 style={{ marginLeft: `${paddingLeftValue}px` }}
             >
-                {depth > 0 && <div className="absolute -left-4 top-0 w-4 h-4 border-l-2 border-b-2 border-gray-700 rounded-bl-lg"></div>}
+                {depth > 0 && <div className="absolute -left-3 top-0 w-3 h-4 border-l border-b border-gray-700 rounded-bl-lg"></div>}
+                
                 <div className="flex-shrink-0 pt-1 relative z-10">
                     <UserAvatar user={{ id: comment.user_id, raw_user_meta_data: comment.raw_user_meta_data, email: comment.email }} size="sm" />
                 </div>
-                <div className="flex-1">
-                    <div className="bg-gray-800 p-3 rounded-2xl rounded-tl-none border border-gray-700 inline-block min-w-[200px] relative">
-                        <div className="flex justify-between items-baseline mb-1 gap-4">
-                            <span className="text-sm font-bold text-indigo-300">{comment.raw_user_meta_data?.full_name || "Anonymous"}</span>
+                
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-baseline mb-1">
+                        <span className="text-sm font-bold text-indigo-300">{comment.raw_user_meta_data?.full_name || "Anonymous"}</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-600">{formatTime(comment.created_at)}</span>
                             {currentUser && currentUser.id === comment.user_id && (
                                 <div className="relative">
-                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-700"><MoreVertical size={14} /></button>
+                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-500 hover:text-white p-1 rounded transition"><MoreVertical size={14} /></button>
                                     {showMenu && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)}></div>
-                                            <div className="absolute right-0 top-6 z-20 w-24 bg-gray-800 border border-gray-600 rounded shadow-lg py-1">
-                                                <button onClick={() => onDelete(comment.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-gray-700 text-left"><Trash2 size={12} /> Delete</button>
+                                            <div className="absolute right-0 top-6 z-20 w-24 bg-[#1e293b] border border-gray-700 rounded-lg shadow-xl py-1">
+                                                <button onClick={() => onDelete(comment.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-white/5 text-left"><Trash2 size={12} /> Delete</button>
                                             </div>
                                         </>
                                     )}
                                 </div>
                             )}
                         </div>
-                        <p className="text-sm text-gray-200 leading-normal">{comment.content}</p>
-                    </div>
-                    <div className="flex items-center gap-4 mt-1 ml-2">
-                        <div className="flex items-center gap-1 text-xs text-gray-500"><span>{formatTime(comment.created_at)}</span></div>
-                        <button onClick={handleLikeComment} className={`text-xs font-semibold flex items-center gap-1 ${isLiked ? 'text-pink-500' : 'text-gray-400 hover:text-white'}`}><Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes} Like</button>
-                        <button onClick={handleToggleReply} className="text-xs font-semibold text-gray-400 hover:text-white flex items-center gap-1">Reply</button>
                     </div>
                     
-                    {/* KHU VỰC ĐÃ SỬA: Reply Input UI mới (Đồng bộ với PostItem input) */}
+                    <p className="text-sm text-gray-300 leading-relaxed break-words">{comment.content}</p>
+                    
+                    <div className="flex items-center gap-4 mt-2">
+                        <button onClick={handleLikeComment} className={`text-xs font-semibold flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-300'}`}><Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes}</button>
+                        <button onClick={handleToggleReply} className="text-xs font-semibold text-gray-500 hover:text-indigo-400 flex items-center gap-1 transition-colors">Reply</button>
+                    </div>
+                    
                     {showReplyInput && currentUser && (
-                        <div className="mt-2 flex gap-3 items-start animate-in fade-in slide-in-from-top-2 duration-200">
-                            {/* Avatar của người reply */}
-                            <UserAvatar user={{ ...currentUser, id: currentUser.id }} size="sm" /> 
-                            
-                            <div className="flex-1 relative">
-                                <input 
-                                    type="text" 
-                                    autoFocus 
-                                    value={replyContent} 
-                                    onChange={(e) => setReplyContent(e.target.value)} 
-                                    placeholder={`Reply to ${comment.raw_user_meta_data?.full_name || "this comment"}...`}
-                                    // Áp dụng UI tương tự PostItem input
-                                    className="w-full bg-gray-800 border border-gray-600 rounded-full pl-4 pr-12 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500" 
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                                    disabled={isSendingReply}
-                                />
-                                <button 
-                                    onClick={handleSendReply} 
-                                    disabled={!replyContent.trim() || isSendingReply} 
-                                    className="absolute right-1.5 top-1.5 p-1.5 bg-indigo-600 rounded-full text-white hover:bg-indigo-500 disabled:opacity-50"
-                                >
-                                    <Send size={16} />
-                                </button>
-                            </div>
+                        <div className="mt-3 flex gap-2 items-center animate-in fade-in slide-in-from-top-1">
+                            <input 
+                                type="text" 
+                                autoFocus 
+                                value={replyContent} 
+                                onChange={(e) => setReplyContent(e.target.value)} 
+                                placeholder={`Reply...`}
+                                className="flex-1 bg-[#05050A] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/50 transition-colors" 
+                                onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
+                                disabled={isSendingReply}
+                            />
+                            <button onClick={handleSendReply} disabled={!replyContent.trim() || isSendingReply} className="p-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 disabled:opacity-50">
+                                <Send size={14} />
+                            </button>
                         </div>
                     )}
                 </div>
             </div>
             {childComments.map(child => (
-                 <CommentItem 
-                     key={child.id} 
-                     comment={child} 
-                     allComments={allComments} 
-                     currentUser={currentUser} 
-                     onDelete={onDelete} 
-                     onReplySuccess={onReplySuccess} 
-                     depth={depth + 1} 
-                     highlightId={highlightId}
-                 />
+                 <CommentItem key={child.id} comment={child} allComments={allComments} currentUser={currentUser} onDelete={onDelete} onReplySuccess={onReplySuccess} depth={depth + 1} highlightId={highlightId} />
             ))}
         </div>
     );
@@ -194,11 +173,9 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
     const [editForm, setEditForm] = useState({ title: postData.title, content: postData.content }); 
     const [isUpdatingPost, setIsUpdatingPost] = useState(false); 
 
-    // URL Params
     const [searchParams] = useSearchParams();
     const highlightCommentId = searchParams.get('commentId');
 
-    // Effect kiểm tra trạng thái Like
     useEffect(() => {
         if (!currentUser) return;
         const checkLikeStatus = async () => {
@@ -208,7 +185,6 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
         checkLikeStatus();
     }, [currentUser?.id, postData.id]);
 
-    // HÀM FETCH RIÊNG BIỆT
     const fetchCommentsData = useCallback(async () => {
         setLoadingComments(true);
         const { data, error } = await supabase.from("comments_view").select("*").eq("post_id", postData.id).order("created_at", { ascending: true });
@@ -217,7 +193,6 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
         return data || [];
     }, [postData.id]);
 
-    // LOGIC CHECK HIGHLIGHT & AUTO FETCH
     useEffect(() => {
         if (highlightCommentId) {
             setShowComments(true);
@@ -226,7 +201,7 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                 fetchCommentsData();
             }
         }
-    }, [highlightCommentId, postData.id, comments, fetchCommentsData]); // Đã thêm comments vào dependencies
+    }, [highlightCommentId, postData.id, comments, fetchCommentsData]);
 
     const handleLike = useCallback(async () => {
         if (!currentUser) return alert("Please log in.");
@@ -302,16 +277,12 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
         setIsDeletingPost(false);
     };
 
-    // HÀM CHỈNH SỬA BÀI VIẾT (Update)
     const executeEditPost = async () => {
         if (!editForm.title.trim() || !editForm.content.trim()) return;
         setIsUpdatingPost(true);
 
         const { data, error } = await supabase.from("community_posts")
-            .update({ 
-                title: editForm.title, 
-                content: editForm.content,
-            })
+            .update({ title: editForm.title, content: editForm.content })
             .eq("id", postData.id) 
             .select("*"); 
 
@@ -319,67 +290,63 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
 
         if (!error && data && data.length > 0) {
             const updatedPostData = data[0]; 
-            
             setPostData(prev => ({ 
                 ...prev, 
                 title: updatedPostData.title, 
                 content: updatedPostData.content, 
                 updated_at: updatedPostData.updated_at || prev.updated_at,
             }));
-            
             if (onPostUpdated) onPostUpdated(updatedPostData);
-
             setIsEditing(false);
         } else {
-            console.error("Supabase Update Error:", error); 
-            alert("Error updating post: " + (error?.message || "Post not found or update failed. Please check RLS policies."));
+            alert("Error updating post.");
         }
     };
     
     const rootComments = comments.filter(c => !c.parent_id);
 
     return (
-        <div className="bg-gray-800/60 border border-gray-700/50 p-6 rounded-xl shadow-md hover:shadow-indigo-500/10 transition duration-300">
-            {/* Header Post (Sử dụng postData) */}
+        // CARD STYLE MỚI: Glassmorphism trên nền đen
+        <div className="bg-[#0B0D14] border border-white/10 p-6 rounded-2xl shadow-lg hover:border-indigo-500/30 transition-all duration-300">
+            {/* Header Post */}
             <div className="flex items-start gap-4">
                 <div className="flex-shrink-0 mt-1"><UserAvatar user={{ id: postData.user_id, raw_user_meta_data: postData.raw_user_meta_data, email: postData.email }} size="md" /></div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                        <div>
-                            <h3 className="text-2xl font-bold text-indigo-400 mb-1">{postData.title}</h3>
-                            <div className="flex items-center gap-2 text-gray-400 text-xs">
-                                <span>{postData.raw_user_meta_data?.full_name || 'Anonymous'}</span>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-xl font-bold text-white mb-1 leading-tight hover:text-indigo-400 transition-colors break-words">
+                                <Link to={`/community/post/${postData.id}`}>{postData.title}</Link>
+                            </h3>
+                            <div className="flex items-center gap-2 text-gray-500 text-xs">
+                                <span className="text-indigo-300 font-medium">{postData.raw_user_meta_data?.full_name || 'Anonymous'}</span>
                                 <span>•</span>
                                 <span>{formatTime(postData.created_at)}</span>
                                 {postData.updated_at && postData.updated_at !== postData.created_at && (
-                                    <span> • Edited {formatTime(postData.updated_at)}</span>
+                                    <span> • Edited</span>
                                 )}
                             </div>
                         </div>
                         {currentUser && currentUser.id === postData.user_id && (
                             <div className="relative ml-2">
-                                <button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-400 hover:text-white p-2 rounded-full hover:bg-gray-700">
+                                <button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-500 hover:text-white p-2 rounded-lg hover:bg-white/10 transition">
                                     <MoreVertical size={20} />
                                 </button>
                                 {showPostMenu && (
                                     <>
                                         <div className="fixed inset-0 z-10" onClick={() => setShowPostMenu(false)}></div>
-                                        <div className="absolute right-0 top-10 z-20 w-32 bg-gray-800 border border-gray-600 rounded shadow-lg py-1">
-                                            {/* Nút Edit */}
+                                        <div className="absolute right-0 top-10 z-20 w-32 bg-[#1e293b] border border-gray-700 rounded-lg shadow-2xl py-1">
                                             <button 
                                                 onClick={() => {
-                                                    setEditForm({ title: postData.title, content: postData.content }); // Load nội dung hiện tại
+                                                    setEditForm({ title: postData.title, content: postData.content });
                                                     setIsEditing(true); 
                                                     setShowPostMenu(false); 
                                                 }} 
-                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-indigo-400 hover:bg-gray-700 text-left">
-                                                <span className="h-4 w-4">✏️</span> Edit Post
+                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-indigo-400 hover:bg-white/5 text-left">
+                                                <span className="h-4 w-4"><EditIcon size={14} /></span> Edit Post
                                             </button>
-                                            
-                                            {/* Nút Delete */}
                                             <button 
                                                 onClick={() => setDeletePostModalOpen(true)} 
-                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-gray-700 text-left">
+                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-white/5 text-left">
                                                 <Trash2 size={14} /> Delete Post
                                             </button>
                                         </div>
@@ -388,21 +355,21 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                             </div>
                         )}
                     </div>
-                    <p className="text-gray-300 whitespace-pre-line leading-relaxed">{postData.content}</p>
+                    <p className="text-gray-300 mt-3 whitespace-pre-line leading-relaxed break-words">{postData.content}</p>
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="flex items-center gap-4 mt-4 ml-14">
-                <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${isLiked ? "text-pink-500 bg-pink-500/10" : "text-gray-400 hover:bg-gray-700"}`}><Heart size={20} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span></button>
-                <button onClick={toggleComments} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition ${showComments ? "text-indigo-400 bg-indigo-500/10" : "text-gray-400 hover:bg-gray-700"}`}><MessageCircle size={20} /><span>{commentCount} Comments</span></button>
+            {/* Footer Actions */}
+            <div className="flex items-center gap-4 mt-5 pl-[3.5rem]">
+                <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${isLiked ? "text-red-500 bg-red-500/10" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}><Heart size={18} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span></button>
+                <button onClick={toggleComments} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${showComments ? "text-indigo-400 bg-indigo-500/10" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}><MessageCircle size={18} /><span>{commentCount}</span></button>
             </div>
 
-            {/* Comment Section (Sử dụng postData cho comment) */}
+            {/* Comment Section */}
             {showComments && (
-                <div className="mt-4 bg-gray-900/40 rounded-lg p-4 ml-2 sm:ml-14 border border-gray-700/50">
+                <div className="mt-5 bg-[#05050A] rounded-xl p-4 ml-0 sm:ml-[3.5rem] border border-white/5">
                     {currentUser ? (
-                        <div className="flex gap-3 items-start mb-4">
+                        <div className="flex gap-3 items-start mb-5">
                             <UserAvatar user={{ ...currentUser, id: currentUser.id }} size="sm" />
                             <div className="flex-1 relative">
                                 <input 
@@ -410,14 +377,14 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                                     value={newComment} 
                                     onChange={(e) => setNewComment(e.target.value)} 
                                     placeholder="Write a comment..." 
-                                    className="w-full bg-gray-800 border border-gray-600 rounded-full pl-4 pr-12 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500" 
+                                    className="w-full bg-[#0B0D14] border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:bg-[#0B0D14] transition-all" 
                                     onKeyDown={(e) => e.key === 'Enter' && handleSendComment()} 
                                     disabled={isSendingComment}
                                 />
                                 <button 
                                     onClick={handleSendComment} 
                                     disabled={!newComment.trim() || isSendingComment} 
-                                    className="absolute right-1.5 top-1.5 p-1.5 bg-indigo-600 rounded-full text-white hover:bg-indigo-500 disabled:opacity-50"
+                                    className="absolute right-2 top-2 p-1.5 bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors"
                                 >
                                     <Send size={16} />
                                 </button>
@@ -428,50 +395,29 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                     )}
 
                     <div className="space-y-1 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                        {loadingComments ? <p className="text-sm text-gray-500 italic">Loading conversation...</p> : rootComments.length === 0 ? <p className="text-sm text-gray-500 italic text-center py-4">No comments yet.</p> : (
+                        {loadingComments ? <p className="text-sm text-gray-500 italic text-center py-4">Loading comments...</p> : rootComments.length === 0 ? <p className="text-sm text-gray-500 italic text-center py-4">No comments yet. Be the first!</p> : (
                             rootComments.map((cmt) => (
-                                <CommentItem 
-                                    key={cmt.id} 
-                                    comment={cmt} 
-                                    allComments={comments} 
-                                    currentUser={currentUser} 
-                                    onDelete={requestDeleteComment} 
-                                    onReplySuccess={handleReplySuccess} 
-                                    depth={0} 
-                                    highlightId={highlightCommentId} 
-                                />
+                                <CommentItem key={cmt.id} comment={cmt} allComments={comments} currentUser={currentUser} onDelete={requestDeleteComment} onReplySuccess={handleReplySuccess} depth={0} highlightId={highlightCommentId} />
                             ))
                         )}
                     </div>
                 </div>
             )}
 
-            {/* Modals */}
             <DeleteConfirmModal isOpen={deleteCommentModalOpen} onClose={() => setDeleteCommentModalOpen(false)} onConfirm={executeDeleteComment} isDeleting={isDeletingComment} title="Delete Comment?" message="Are you sure?" />
             <DeleteConfirmModal isOpen={deletePostModalOpen} onClose={() => setDeletePostModalOpen(false)} onConfirm={executeDeletePost} isDeleting={isDeletingPost} title="Delete Post?" message="Are you sure?" />
-            
-            {/* PostFormModal cho Chỉnh sửa */}
-            <PostFormModal
-                show={isEditing}
-                onClose={() => setIsEditing(false)}
-                onSubmit={executeEditPost}
-                form={editForm}
-                setForm={setEditForm}
-                loading={isUpdatingPost}
-                currentUser={currentUser}
-                isEdit={true} 
-            />
+            <PostFormModal show={isEditing} onClose={() => setIsEditing(false)} onSubmit={executeEditPost} form={editForm} setForm={setEditForm} loading={isUpdatingPost} currentUser={currentUser} isEdit={true} />
         </div>
     );
 };
 
-// Cập nhật memo để lắng nghe thay đổi trên postData (nếu nó là prop thay đổi)
 export default memo(PostItem, (prev, next) => {
-    // Chỉ render lại nếu initialPost thay đổi (tức là component cha gửi data mới)
     return (
         prev.post.id === next.post.id &&
         prev.post.like_count === next.post.like_count &&
         prev.post.comment_count === next.post.comment_count &&
-        prev.currentUser?.id === next.currentUser?.id
+        prev.currentUser?.id === next.currentUser?.id &&
+        prev.post.title === next.post.title && 
+        prev.post.content === next.post.content 
     );
 });

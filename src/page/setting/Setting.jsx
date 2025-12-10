@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react"; // Thêm useRef
+import { useState, useEffect, useRef } from "react"; 
 import { supabase } from "../../routes/supabaseClient";
+import { User, Shield, Camera, Save, Lock, Edit3 } from "lucide-react";
 
 const Setting = ({ user }) => {
     const [currentUser, setCurrentUser] = useState(null);
@@ -17,12 +18,9 @@ const Setting = ({ user }) => {
     const [isEditingPassword, setIsEditingPassword] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     
-    // State mới để quản lý loading khi upload ảnh
     const [uploading, setUploading] = useState(false);
-    // Ref để trỏ tới thẻ input file ẩn
     const fileInputRef = useRef(null);
 
-    // Load user info
     useEffect(() => {
         const loadUser = async () => {
             let current = user;
@@ -45,7 +43,6 @@ const Setting = ({ user }) => {
         loadUser();
     }, [user]);
 
-    // Hide messages on click outside
     useEffect(() => {
         const handleClickOutside = () => {
             if (successMessage || passwordError) {
@@ -57,7 +54,6 @@ const Setting = ({ user }) => {
         return () => window.removeEventListener("click", handleClickOutside);
     }, [successMessage, passwordError]);
 
-    // --- LOGIC UPLOAD AVATAR MỚI ---
     const handleUploadAvatar = async (event) => {
         try {
             setUploading(true);
@@ -69,43 +65,29 @@ const Setting = ({ user }) => {
 
             const file = event.target.files[0];
             const fileExt = file.name.split('.').pop();
-            // Tạo tên file unique để tránh cache trình duyệt (dùng timestamp)
             const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            // 1. Upload ảnh lên Supabase Storage (Bucket 'avatars')
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file);
+            const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+            if (uploadError) throw uploadError;
 
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            // 2. Lấy đường dẫn công khai (Public URL)
             const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
             const publicUrl = data.publicUrl;
 
-            // 3. Cập nhật User Metadata với URL mới
             const { error: updateError } = await supabase.auth.updateUser({
                 data: { avatar_url: publicUrl },
             });
+            if (updateError) throw updateError;
 
-            if (updateError) {
-                throw updateError;
-            }
-
-            // 4. Update thành công -> Refresh Session để Header cập nhật ảnh
             await supabase.auth.refreshSession();
 
-            // 5. Cập nhật state nội bộ
             setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
             setCurrentUser((prev) => ({
                 ...prev,
                 user_metadata: { ...prev.user_metadata, avatar_url: publicUrl },
             }));
             
-            setSuccessMessage("Avatar uploaded and updated successfully!");
+            setSuccessMessage("Avatar uploaded successfully!");
 
         } catch (error) {
             console.error('Error uploading avatar:', error.message);
@@ -130,11 +112,8 @@ const Setting = ({ user }) => {
 
         if (!error) {
             setIsEditingName(false);
-            setSuccessMessage("Your name has been successfully updated.");
-            
-            // Refresh session khi đổi tên
+            setSuccessMessage("Name updated successfully.");
             await supabase.auth.refreshSession();
-
             setCurrentUser((prev) => ({
                 ...prev,
                 user_metadata: { ...prev.user_metadata, full_name: formData.name },
@@ -144,143 +123,136 @@ const Setting = ({ user }) => {
         }
     };
 
-    return (
-        <div className="relative isolate pt-24 px-6 md:px-48 bg-gray-900 overflow-hidden min-h-screen">
-            {/* ... Phần background giữ nguyên ... */}
-             <div className="h-[550px] flex mb-16">
-                <div
-                    aria-hidden="true"
-                    className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-                >
-                    <div
-                        style={{
-                            clipPath:
-                                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-                        }}
-                        className="relative left-[calc(50%-11rem)] aspect-1155/678 w-[1155px] -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[2300px]"
-                    />
-                </div>
+    // --- NAVIGATION TABS ---
+    const tabs = [
+        { id: "general", label: "Personal Info", icon: <User size={18} /> },
+        { id: "avatar", label: "Avatar", icon: <Camera size={18} /> },
+        { id: "security", label: "Security", icon: <Shield size={18} /> },
+    ];
 
-                {/* Layout */}
-                <div className="relative w-full max-w-7xl bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 flex overflow-hidden">
-                    {/* Sidebar */}
-                    <aside className="w-64 border-r border-gray-700 p-6">
-                        <h2 className="text-white text-xl font-bold mb-6">Settings</h2>
+    return (
+        <div className="bg-[#05050A] min-h-screen text-gray-300 font-sans pt-24 px-4 pb-12 relative isolate overflow-hidden">
+            
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
+            <div className="fixed top-20 right-0 -z-10 w-[30rem] h-[30rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="fixed bottom-0 left-0 -z-10 w-[30rem] h-[30rem] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+            <div className="max-w-6xl mx-auto">
+                <div className="flex flex-col lg:flex-row bg-[#0B0D14]/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl min-h-[600px]">
+                    
+                    {/* SIDEBAR */}
+                    <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-white/10 bg-white/5 lg:bg-transparent p-6">
+                        <h2 className="text-2xl font-bold text-white mb-8 px-2 tracking-tight">Settings</h2>
                         <nav className="space-y-2">
-                            {[
-                                { id: "general", label: "Personal Details" },
-                                { id: "avatar", label: "Avatar" },
-                                { id: "security", label: "Privacy" },
-                            ].map((item) => (
+                            {tabs.map((tab) => (
                                 <button
-                                    key={item.id}
+                                    key={tab.id}
                                     onClick={() => {
-                                        setActiveTab(item.id);
+                                        setActiveTab(tab.id);
                                         setIsEditingName(false);
                                         setIsEditingPassword(false);
                                         setPasswordError("");
                                         setSuccessMessage("");
-                                        // Reset form data khi chuyển tab
                                         if (currentUser) {
                                             setFormData((prev) => ({
                                                 ...prev,
                                                 name: currentUser.user_metadata?.full_name || prev.name,
-                                                avatar_url: currentUser.user_metadata?.avatar_url || prev.avatar_url,
                                             }));
                                         }
                                     }}
-                                    className={`w-full text-left px-4 py-2 rounded-lg font-medium transition ${activeTab === item.id
-                                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30"
-                                        : "text-gray-300 hover:bg-gray-700/40"
+                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200
+                                        ${activeTab === tab.id 
+                                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
+                                            : "text-gray-400 hover:bg-white/5 hover:text-white"
                                         }`}
                                 >
-                                    {item.label}
+                                    {tab.icon}
+                                    {tab.label}
                                 </button>
                             ))}
                         </nav>
                     </aside>
 
-                    {/* Main */}
-                    <main className="flex-1 p-10 text-white overflow-y-auto">
-                        {/* TAB GENERAL - Giữ nguyên logic cũ */}
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 p-8 lg:p-12 overflow-y-auto custom-scrollbar">
+                        
+                        {/* 1. GENERAL TAB */}
                         {activeTab === "general" && currentUser && (
-                            <div>
-                                <h3 className="text-2xl font-bold mb-6">Account details</h3>
-                                <div className="space-y-6 max-w-3xl">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-200">Full name</label>
-                                        <div className="flex justify-between items-center gap-4">
-                                            <input
-                                                type="text"
-                                                value={formData.name}
-                                                disabled={!isEditingName}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, name: e.target.value })
-                                                }
-                                                className={`mt-2 w-2/4 rounded-md px-3 py-2 ${isEditingName
-                                                    ? "bg-white/20 text-white outline outline-1 outline-indigo-500"
-                                                    : "bg-white/10 text-gray-400 outline outline-1 outline-white/20 cursor-not-allowed"
-                                                    }`}
-                                            />
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-2xl font-bold text-white mb-1">Personal Information</h3>
+                                <p className="text-gray-500 mb-8">Manage your personal details.</p>
+                                
+                                <div className="space-y-8 max-w-xl">
+                                    <div className="group">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
+                                        <div className="flex gap-4">
+                                            <div className="relative flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={formData.name}
+                                                    disabled={!isEditingName}
+                                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                                    className={`w-full bg-[#05050A] border rounded-xl px-4 py-3 text-white transition-all outline-none
+                                                        ${isEditingName 
+                                                            ? "border-indigo-500 focus:ring-2 focus:ring-indigo-500/20" 
+                                                            : "border-white/10 text-gray-400 cursor-not-allowed"}`}
+                                                />
+                                            </div>
                                             {!isEditingName ? (
                                                 <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setIsEditingName(true);
-                                                        setSuccessMessage("");
-                                                    }}
-                                                    className="mt-2 bg-indigo-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 transition"
+                                                    onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }}
+                                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white transition-colors"
                                                 >
-                                                    Change name
+                                                    <Edit3 size={20} />
                                                 </button>
                                             ) : (
                                                 <button
-                                                    type="button"
                                                     onClick={handleSaveName}
-                                                    className="mt-2 bg-indigo-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 transition"
+                                                    className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors shadow-lg"
                                                 >
-                                                    Save changes
+                                                    Save
                                                 </button>
                                             )}
                                         </div>
-                                        {successMessage && (
-                                            <p className="mt-2 text-green-400 text-sm">{successMessage}</p>
-                                        )}
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-200">Email</label>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
                                         <input
                                             type="text"
                                             value={formData.email || ""}
                                             disabled
-                                            className="mt-2 w-2/4 rounded-md bg-white/10 px-3 py-2 text-white outline outline-1 outline-white/20 focus:outline-indigo-500"
+                                            className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-gray-500 cursor-not-allowed"
                                         />
+                                        <p className="text-xs text-gray-600 mt-2">Email cannot be changed.</p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {/* TAB AVATAR - Logic mới */}
+                        {/* 2. AVATAR TAB */}
                         {activeTab === "avatar" && currentUser && (
-                            <div>
-                                <h3 className="text-2xl font-bold mb-6">Your avatar</h3>
-                                <div className="flex flex-col items-center">
-                                    <div className="relative">
-                                        <img
-                                            src={formData.avatar_url || `https://ui-avatars.com/api/?name=${formData.email}`}
-                                            alt="avatar"
-                                            className="w-60 h-60 rounded-full border-4 border-indigo-500 shadow-xl my-4 object-cover"
-                                        />
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-2xl font-bold text-white mb-1">Profile Picture</h3>
+                                <p className="text-gray-500 mb-8">Update your avatar to be recognized.</p>
+
+                                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-white/10 rounded-3xl bg-white/[0.02]">
+                                    <div className="relative group">
+                                        <div className="w-48 h-48 rounded-full p-1 border-2 border-indigo-500/50 shadow-2xl">
+                                            <img
+                                                src={formData.avatar_url || `https://ui-avatars.com/api/?name=${formData.email}`}
+                                                alt="avatar"
+                                                className="w-full h-full rounded-full object-cover bg-[#05050A]"
+                                            />
+                                        </div>
                                         {uploading && (
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full backdrop-blur-sm">
                                                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Input file ẩn */}
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -291,127 +263,124 @@ const Setting = ({ user }) => {
                                     />
 
                                     <button
-                                        onClick={() => fileInputRef.current.click()} // Kích hoạt input file
+                                        onClick={() => fileInputRef.current.click()}
                                         disabled={uploading}
-                                        className={`mt-4 w-1/4 px-5 py-2.5 rounded-lg font-semibold transition ${
-                                            uploading 
-                                            ? "bg-gray-600 cursor-not-allowed" 
-                                            : "bg-indigo-600 hover:bg-indigo-500"
-                                        }`}
+                                        className="mt-8 px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
                                     >
-                                        {uploading ? "Uploading..." : "Upload new photo"}
+                                        {uploading ? "Uploading..." : "Upload New Photo"}
                                     </button>
-                                    
-                                    {successMessage && (
-                                        <p className="mt-4 text-green-400 text-sm">{successMessage}</p>
-                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* TAB SECURITY - Giữ nguyên logic cũ */}
+                        {/* 3. SECURITY TAB */}
                         {activeTab === "security" && (
-                            <div>
-                                {/* ... (Code phần security giữ nguyên như cũ) ... */}
-                                <h3 className="text-2xl font-bold mb-6">Password</h3>
-                                <div className="flex flex-col space-y-3 max-w-3xl">
-                                    <label className="block text-sm font-medium text-gray-200">
-                                        Current password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        placeholder="**************"
-                                        value={formData.currentPassword || ""}
-                                        disabled={!isEditingPassword}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, currentPassword: e.target.value })
-                                        }
-                                        className="w-2/4 rounded-md bg-white/10 px-3 py-2 text-white outline outline-1 outline-white/20 focus:outline-indigo-500"
-                                    />
-                                    {passwordError && (
-                                        <p className="text-red-400 text-sm">{passwordError}</p>
-                                    )}
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <h3 className="text-2xl font-bold text-white mb-1">Security</h3>
+                                <p className="text-gray-500 mb-8">Manage your password and account security.</p>
+
+                                <div className="space-y-6 max-w-xl">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Current Password</label>
+                                        <div className="relative">
+                                            <Lock size={18} className="absolute left-4 top-3.5 text-gray-500" />
+                                            <input
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={formData.currentPassword || ""}
+                                                disabled={!isEditingPassword}
+                                                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                                                className={`w-full bg-[#05050A] border rounded-xl pl-12 pr-4 py-3 text-white outline-none transition-all
+                                                    ${isEditingPassword ? "border-indigo-500 focus:ring-1 focus:ring-indigo-500" : "border-white/10 text-gray-500"}`}
+                                            />
+                                        </div>
+                                    </div>
 
                                     {isEditingPassword && (
-                                        <>
-                                            <label className="block text-sm font-medium text-gray-200">
-                                                New password
-                                            </label>
-                                            <input
-                                                type="password"
-                                                placeholder="**************"
-                                                value={formData.newPassword || ""}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, newPassword: e.target.value })
-                                                }
-                                                className="w-2/4 rounded-md bg-white/10 px-3 py-2 text-white outline outline-1 outline-white/20 focus:outline-indigo-500"
-                                            />
-
-                                            <label className="block text-sm font-medium text-gray-200">
-                                                Confirm new password
-                                            </label>
-                                            <input
-                                                type="password"
-                                                placeholder="**************"
-                                                value={formData.confirmPassword || ""}
-                                                onChange={(e) =>
-                                                    setFormData({ ...formData, confirmPassword: e.target.value })
-                                                }
-                                                className="w-2/4 rounded-md bg-white/10 px-3 py-2 text-white outline outline-1 outline-white/20 focus:outline-indigo-500"
-                                            />
-                                        </>
+                                        <div className="space-y-6 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-2">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">New Password</label>
+                                                <div className="relative">
+                                                    <Lock size={18} className="absolute left-4 top-3.5 text-indigo-500" />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="New password"
+                                                        value={formData.newPassword || ""}
+                                                        onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                                                        className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400 mb-2">Confirm New Password</label>
+                                                <div className="relative">
+                                                    <Lock size={18} className="absolute left-4 top-3.5 text-indigo-500" />
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Confirm new password"
+                                                        value={formData.confirmPassword || ""}
+                                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                                        className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
                                     )}
 
-                                    <button
-                                        className="mt-2 w-1/4 bg-indigo-600 px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-500 transition"
-                                        onClick={async (e) => {
-                                            e.stopPropagation();
+                                    <div className="pt-4">
+                                        {!isEditingPassword ? (
+                                            <button
+                                                onClick={() => { setIsEditingPassword(true); setPasswordError(""); setFormData({ ...formData, currentPassword: "", newPassword: "", confirmPassword: "" }); }}
+                                                className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium transition-colors"
+                                            >
+                                                Change Password
+                                            </button>
+                                        ) : (
+                                            <div className="flex gap-4">
+                                                <button
+                                                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        if (formData.newPassword !== formData.confirmPassword) {
+                                                            setPasswordError("New passwords do not match.");
+                                                            return;
+                                                        }
+                                                        try {
+                                                            const { error: signInError } = await supabase.auth.signInWithPassword({
+                                                                email: currentUser.email,
+                                                                password: formData.currentPassword,
+                                                            });
+                                                            if (signInError) { setPasswordError("Current password is incorrect."); return; }
 
-                                            if (!isEditingPassword) {
-                                                setIsEditingPassword(true);
-                                                setPasswordError("");
-                                                setFormData({ ...formData, currentPassword: "", newPassword: "", confirmPassword: "" });
-                                                return;
-                                            }
-
-                                            if (formData.newPassword !== formData.confirmPassword) {
-                                                setPasswordError("New passwords do not match.");
-                                                return;
-                                            }
-
-                                            try {
-                                                const { error: signInError } = await supabase.auth.signInWithPassword({
-                                                    email: currentUser.email,
-                                                    password: formData.currentPassword,
-                                                });
-
-                                                if (signInError) {
-                                                    setPasswordError("Current password is incorrect.");
-                                                    return;
-                                                }
-
-                                                const { error: updateError } = await supabase.auth.updateUser({
-                                                    password: formData.newPassword
-                                                });
-
-                                                if (updateError) {
-                                                    setPasswordError("Failed to update password.");
-                                                } else {
-                                                    setSuccessMessage("Password updated successfully!");
-                                                    setIsEditingPassword(false);
-                                                    setFormData({ ...formData, currentPassword: "", newPassword: "", confirmPassword: "" });
-                                                    setPasswordError("");
-                                                }
-                                            } catch (err) {
-                                                console.error(err);
-                                            }
-                                        }}
-                                    >
-                                        {isEditingPassword ? "Save changes" : "Change password"}
-                                    </button>
+                                                            const { error: updateError } = await supabase.auth.updateUser({ password: formData.newPassword });
+                                                            if (updateError) { setPasswordError("Failed to update password."); } else {
+                                                                setSuccessMessage("Password updated successfully!");
+                                                                setIsEditingPassword(false);
+                                                                setFormData({ ...formData, currentPassword: "", newPassword: "", confirmPassword: "" });
+                                                                setPasswordError("");
+                                                            }
+                                                        } catch (err) { console.error(err); }
+                                                    }}
+                                                >
+                                                    Update Password
+                                                </button>
+                                                <button
+                                                    onClick={() => setIsEditingPassword(false)}
+                                                    className="px-6 py-3 bg-transparent hover:bg-white/5 text-gray-400 rounded-xl transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )}
+
+                        {/* Notifications */}
+                        {successMessage && <div className="mt-6 p-4 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"><Save size={18} /> {successMessage}</div>}
+                        {passwordError && <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl animate-in fade-in slide-in-from-bottom-2">{passwordError}</div>}
+                    
                     </main>
                 </div>
             </div>

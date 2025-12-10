@@ -1,27 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { Package, Upload, User, CheckCircle, ArrowRight, ArrowLeft, X, Monitor, Image as ImageIcon } from "lucide-react";
+import { Package, Upload, CheckCircle, ArrowRight, ArrowLeft, X, Monitor, Image as ImageIcon } from "lucide-react";
 import { supabase } from "../../../routes/supabaseClient";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 const NotificationModal = ({ message, isVisible, onClose }) => {
   if (!isVisible) return null;
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="fixed inset-0 bg-black/70" onClick={onClose}></div>
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-gray-800 rounded-lg p-6 border border-red-500/50 shadow-xl w-full max-w-lg">
-          <div className="flex gap-3">
-            <X className="text-red-400" />
-            <div>
-              <h3 className="text-lg text-white font-bold">Invalid File</h3>
-              <p className="text-red-300 mt-2">{message}</p>
-            </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="relative bg-[#1e293b] border border-red-500/30 rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-200">
+        <div className="flex gap-4">
+          <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 flex-shrink-0">
+            <X size={24} />
           </div>
-          <div className="text-right mt-6">
-            <button onClick={onClose} className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded text-white">
-              Close
-            </button>
+          <div>
+            <h3 className="text-lg text-white font-bold">Invalid File</h3>
+            <p className="text-gray-400 mt-1 text-sm leading-relaxed">{message}</p>
           </div>
+        </div>
+        <div className="text-right mt-6">
+          <button onClick={onClose} className="bg-red-600 hover:bg-red-500 px-5 py-2 rounded-xl text-white font-medium transition-colors">
+            Close
+          </button>
         </div>
       </div>
     </div>
@@ -152,23 +152,14 @@ const NewProduct = () => {
   };
 
   const uploadViaSignedUrl = async (bucket, filePath, file, onProgress) => {
-    // 1. Tạo Signed URL
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUploadUrl(filePath);
-
+    const { data, error } = await supabase.storage.from(bucket).createSignedUploadUrl(filePath);
     if (error) throw error;
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      
-      // QUAN TRỌNG: Phải là PUT để khớp với Signed URL của Supabase
       xhr.open("PUT", data.signedUrl, true);
-
-      // QUAN TRỌNG: Content-Type để tránh lỗi 400
       xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
-      // --- XỬ LÝ THANH TIẾN ĐỘ ---
       if (onProgress) {
         xhr.upload.onprogress = (evt) => {
           if (evt.lengthComputable) {
@@ -177,24 +168,16 @@ const NewProduct = () => {
           }
         };
       }
-      // ---------------------------
 
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          // Lấy Public URL sau khi upload xong
-          const { data: publicData } = supabase.storage
-            .from(bucket)
-            .getPublicUrl(filePath);
+          const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath);
           resolve(publicData.publicUrl);
         } else {
-          // In lỗi từ server nếu có
           reject(`Upload failed: ${xhr.status} - ${xhr.responseText || xhr.statusText}`);
         }
       };
-
       xhr.onerror = () => reject("Network error during upload.");
-      
-      // Gửi file
       xhr.send(file);
     });
   };
@@ -202,30 +185,17 @@ const NewProduct = () => {
   const uploadInstaller = async (file, os) => {
     const ext = getExtension(file.name);
     const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}_${os}.${ext}`;
-
-    return await uploadViaSignedUrl(
-      "product-installers",
-      safeName,
-      file,
-      (p) => setUploadProgress((prev) => ({ ...prev, [os]: p }))
-    );
+    return await uploadViaSignedUrl("product-installers", safeName, file, (p) => setUploadProgress((prev) => ({ ...prev, [os]: p })));
   };
 
   const uploadImage = async (file) => {
     const ext = getExtension(file.name);
     const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-
-    return await uploadViaSignedUrl(
-      "product-images",
-      safeName,
-      file,
-      (p) => setImageProgress(p)
-    );
+    return await uploadViaSignedUrl("product-images", safeName, file, (p) => setImageProgress(p));
   };
 
   const handleNext = () => {
     setMessage("");
-
     if (currentStep === 1) {
       if (!productName.trim() || !applicationType || osTags.length === 0) {
         setMessage("Please fill Product Name, Application Type and select at least one OS.");
@@ -234,17 +204,12 @@ const NewProduct = () => {
       setCurrentStep(2);
       return;
     }
-
     if (currentStep === 2) {
-      const missing = osTags.filter(
-        (os) => !filesByOS[os] && !existingDownloadLinks[os]
-      );
-
+      const missing = osTags.filter((os) => !filesByOS[os] && !existingDownloadLinks[os]);
       if (!isEditMode && missing.length > 0) {
         setMessage(`Please upload installers for: ${missing.join(", ")}`);
         return;
       }
-
       setCurrentStep(3);
     }
   };
@@ -263,13 +228,11 @@ const NewProduct = () => {
 
     try {
       let finalImage = existingImageUrl;
-
       if (selectedImage) {
         finalImage = await uploadImage(selectedImage);
       }
 
       let downloadLinks = { ...existingDownloadLinks };
-
       for (const os of osTags) {
         if (filesByOS[os]) {
           const url = await uploadInstaller(filesByOS[os], os);
@@ -285,9 +248,7 @@ const NewProduct = () => {
         tag: [applicationType, ...osTags],
         image_url: finalImage,
         download_links: downloadLinks,
-        ...(isEditMode
-          ? {}
-          : {
+        ...(isEditMode ? {} : {
               user_id: user?.id || null,
               name_upload: user?.user_metadata?.full_name || null,
               email_upload: user?.email || null
@@ -307,173 +268,191 @@ const NewProduct = () => {
     } catch (err) {
       setMessage("Error: " + (err.message || err));
     }
-
     setLoading(false);
   };
 
+  return (
+    <div className="relative isolate min-h-screen bg-[#05050A] text-gray-300 font-sans pb-12 pt-24 overflow-hidden">
+      
+      {/* Background Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
+      <div className="fixed top-20 right-0 -z-10 w-[40rem] h-[40rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-    return (
-    <div className="relative isolate px-10 pt-12 bg-gray-900 min-h-screen text-gray-100">
-      <div className="max-w-6xl mx-auto bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col lg:flex-row bg-[#0B0D14]/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl min-h-[600px]">
 
-        <div className="flex gap-6">
+          {/* SIDEBAR NAVIGATION */}
+          <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-white/10 bg-white/5 lg:bg-transparent p-6 flex flex-col justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-8 px-2 tracking-tight">{isEditMode ? "Edit Product" : "New Product"}</h2>
 
-          <aside className="w-64 border-r border-gray-700 p-4">
-            <h2 className="text-2xl font-bold mb-6">{isEditMode ? "Edit Product" : "Create Product"}</h2>
-
-            <div className="space-y-3">
-              <div className={`flex items-center gap-3 px-3 py-2 rounded ${currentStep === 1 ? "bg-indigo-600 text-white" : "text-gray-400"}`}>
-                <Package className="w-5 h-5" />
-                <span>Info</span>
-              </div>
-
-              <div className={`flex items-center gap-3 px-3 py-2 rounded ${currentStep === 2 ? "bg-indigo-600 text-white" : "text-gray-400"}`}>
-                <Upload className="w-5 h-5" />
-                <span>Assets</span>
-              </div>
-
-              <div className={`flex items-center gap-3 px-3 py-2 rounded ${currentStep === 3 ? "bg-indigo-600 text-white" : "text-gray-400"}`}>
-                <CheckCircle className="w-5 h-5" />
-                <span>Review</span>
+              <div className="space-y-2">
+                {[
+                  { step: 1, icon: Package, label: "Information" },
+                  { step: 2, icon: Upload, label: "Assets" },
+                  { step: 3, icon: CheckCircle, label: "Review" },
+                ].map((item) => (
+                  <div 
+                    key={item.step}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300
+                      ${currentStep === item.step 
+                        ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
+                        : currentStep > item.step 
+                          ? "text-green-400 hover:bg-white/5" 
+                          : "text-gray-500"
+                      }`}
+                  >
+                    <item.icon size={20} />
+                    <span>{item.label}</span>
+                    {currentStep > item.step && <CheckCircle size={16} className="ml-auto" />}
+                  </div>
+                ))}
               </div>
             </div>
 
-            <Link to="/product" className="block mt-6 text-sm text-indigo-400">Cancel</Link>
+            <Link to="/product" className="mt-8 block text-center px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors border border-white/5 hover:border-white/10 rounded-lg">
+              Cancel & Exit
+            </Link>
           </aside>
 
-          <main className="flex-1 pl-6">
+          {/* MAIN FORM CONTENT */}
+          <main className="flex-1 p-8 lg:p-12 overflow-y-auto custom-scrollbar">
 
             {currentStep === 1 && (
-              <div>
-                <div className="flex items-center gap-3 text-indigo-400 mb-6">
-                  <Package className="w-7 h-7" />
-                  <h1 className="text-3xl font-bold">Product Information</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-white mb-2">Product Information</h1>
+                  <p className="text-gray-500">Fill in the basic details about your product.</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8">
-
-                  <div className="space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div className="space-y-6">
                     <div>
-                      <label className="block text-sm mb-2 text-gray-300">Product Name *</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Product Name <span className="text-red-500">*</span></label>
                       <input
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
-                        className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 text-white"
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                        placeholder="e.g. Super App v1.0"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm mb-2 text-gray-300">Description</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                        className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 text-white"
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none"
+                        placeholder="What does your product do?"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm mb-2 text-gray-300">Usage Instructions</label>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Usage Instructions</label>
                       <textarea
                         value={instructions}
                         onChange={(e) => setInstructions(e.target.value)}
                         rows={4}
-                        className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 text-white"
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none"
+                        placeholder="How to install or use..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm mb-2 text-gray-300">Price ($)</label>
-                      <input
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        className="w-full rounded-lg bg-gray-800 border border-gray-700 px-4 py-2 text-white"
-                      />
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Price ($)</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-3.5 text-gray-500">$</span>
+                        <input
+                          type="number"
+                          value={price}
+                          onChange={(e) => setPrice(e.target.value)}
+                          className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                          placeholder="0 for free"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6 border-l border-gray-700 pl-8">
+                  <div className="space-y-8 lg:border-l lg:border-white/10 lg:pl-10">
                     <div>
-                      <label className="block text-sm mb-3 text-indigo-300">Application Type *</label>
+                      <label className="block text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Application Type</label>
                       <div className="space-y-3">
                         {["Software", "Game"].map((app) => (
                           <label
                             key={app}
-                            className={`flex items-center p-3 rounded-lg border ${
-                              applicationType === app ? "border-indigo-500 bg-indigo-500/10" : "border-gray-700"
-                            }`}
+                            className={`flex items-center p-4 rounded-xl border cursor-pointer transition-all duration-200
+                              ${applicationType === app 
+                                ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]" 
+                                : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                              }`}
                           >
                             <input
                               type="radio"
                               checked={applicationType === app}
                               onChange={() => setApplicationType(app)}
-                              className="w-4 h-4 accent-indigo-500"
+                              className="w-5 h-5 accent-indigo-500"
                             />
-                            <span className="ml-3">{app}</span>
+                            <span className={`ml-3 font-medium ${applicationType === app ? "text-white" : "text-gray-400"}`}>{app}</span>
                           </label>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm mb-3 text-indigo-300">Supported OS *</label>
+                      <label className="block text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Supported Platforms</label>
                       <div className="space-y-3">
                         {KNOWN_OS.map((os) => (
                           <label
                             key={os}
-                            className={`flex items-center p-3 rounded-lg border ${
-                              osTags.includes(os) ? "border-indigo-500 bg-indigo-500/10" : "border-gray-700"
-                            }`}
+                            className={`flex items-center p-4 rounded-xl border cursor-pointer transition-all duration-200
+                              ${osTags.includes(os) 
+                                ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]" 
+                                : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
+                              }`}
                           >
                             <input
                               type="checkbox"
                               checked={osTags.includes(os)}
                               onChange={() => handleOSToggle(os)}
-                              className="w-4 h-4 accent-indigo-500"
+                              className="w-5 h-5 accent-indigo-500"
                             />
-                            <span className="ml-3">{os}</span>
+                            <span className={`ml-3 font-medium ${osTags.includes(os) ? "text-white" : "text-gray-400"}`}>{os}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
             )}
 
             {currentStep === 2 && (
-              <div>
-                <div className="flex items-center gap-3 text-indigo-400 mb-6">
-                  <Upload className="w-7 h-7" />
-                  <h1 className="text-3xl font-bold">Upload Assets</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-white mb-2">Upload Assets</h1>
+                  <p className="text-gray-500">Upload installation files and cover image.</p>
                 </div>
 
-                <div className="grid gap-6">
-                  <div className="bg-gray-800/30 p-6 rounded-xl border border-gray-700">
-                    <h3 className="text-lg font-semibold mb-4 text-indigo-200">Main Installers</h3>
+                <div className="grid gap-8">
+                  <div className="bg-[#05050A] p-6 rounded-2xl border border-white/10">
+                    <h3 className="text-lg font-semibold mb-6 text-indigo-300 flex items-center gap-2">
+                      <Monitor size={20} /> Installer Packages
+                    </h3>
 
                     {osTags.length === 0 ? (
-                      <p className="text-yellow-400">Please select OS in Step 1.</p>
+                      <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 rounded-xl text-center">
+                        Please go back and select at least one OS in Step 1.
+                      </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {osTags.map((os) => (
-                          <div key={os} className="space-y-2 bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                            <div className="flex items-center gap-3">
-                              <Monitor size={18} className="text-slate-400" />
-
-                              <div className="flex-1 overflow-hidden">
-                                <p className="text-sm font-medium text-white">{os}</p>
-                                <p className="text-xs text-slate-500 truncate">
-                                  {filesByOS[os]?.name ||
-                                    existingDownloadLinks[os]?.split("/").pop() ||
-                                    "No file selected"}
-                                </p>
-                              </div>
-
-                              <label className="cursor-pointer bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded text-xs">
-                                Upload
+                          <div key={os} className="bg-[#1e1e1e]/50 p-5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                              <span className="text-white font-bold text-sm bg-white/10 px-2 py-1 rounded">{os}</span>
+                              <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 rounded-lg text-xs font-bold text-white transition-colors shadow-lg shadow-indigo-500/20">
+                                Select File
                                 <input
                                   type="file"
                                   accept={ACCEPT_ATTR[os]}
@@ -482,212 +461,181 @@ const NewProduct = () => {
                                 />
                               </label>
                             </div>
+                            
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-black/30 rounded-lg">
+                                <Package size={20} className={filesByOS[os] ? "text-green-400" : "text-gray-600"} />
+                              </div>
+                              <div className="flex-1 overflow-hidden">
+                                <p className="text-xs text-gray-400 truncate">
+                                  {filesByOS[os]?.name || existingDownloadLinks[os]?.split("/").pop() || "No file selected"}
+                                </p>
+                              </div>
+                            </div>
 
                             {uploadProgress[os] > 0 && uploadProgress[os] < 100 && (
-  <div className="mt-2">
-    <div className="flex justify-between text-xs text-gray-400 mb-1">
-      <span>Uploading...</span>
-      <span>{uploadProgress[os]}%</span>
-    </div>
-    <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
-      <div
-        className="bg-indigo-500 h-full transition-all duration-300 ease-out"
-        style={{ width: `${uploadProgress[os]}%` }}
-      />
-    </div>
-  </div>
-)}
-{uploadProgress[os] === 100 && (
-  <div className="mt-2 text-xs text-green-400 flex items-center gap-1">
-    <CheckCircle size={12} /> Upload Complete
-  </div>
-)}
+                              <div className="mt-4">
+                                <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                                  <span>Uploading...</span>
+                                  <span>{uploadProgress[os]}%</span>
+                                </div>
+                                <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                                  <div className="bg-indigo-500 h-full transition-all duration-300" style={{ width: `${uploadProgress[os]}%` }} />
+                                </div>
+                              </div>
+                            )}
+                            {uploadProgress[os] === 100 && (
+                              <div className="mt-3 text-xs text-green-400 flex items-center gap-1 font-medium bg-green-500/10 p-2 rounded-lg border border-green-500/20">
+                                <CheckCircle size={12} /> Ready to submit
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
                   </div>
 
-                  <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-indigo-200">Cover Image</h3>
-                        <p className="text-sm text-gray-400">Upload one main image for your product.</p>
-                      </div>
-
+                  <div className="bg-[#05050A] p-6 rounded-2xl border border-white/10">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold text-indigo-300 flex items-center gap-2">
+                        <ImageIcon size={20} /> Cover Image
+                      </h3>
                       {!previewUrl && !existingImageUrl && (
-                        <label className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg cursor-pointer">
-                          <Upload size={16} /> Choose Image
+                        <label className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white px-4 py-2 rounded-xl cursor-pointer transition-colors text-sm font-medium">
+                          Browse
                           <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                         </label>
                       )}
                     </div>
 
-                    <div className="mt-4">
-                      {(previewUrl || existingImageUrl) ? (
-                        <div className="space-y-3">
-                          <div className="relative w-full max-w-md aspect-video bg-gray-900 rounded-xl overflow-hidden border border-indigo-500/30 group">
-                            <img src={previewUrl || existingImageUrl} alt="Cover" className="w-full h-full object-cover" />
-
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                              <label className="cursor-pointer bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-4 py-2 rounded-lg">
-                                <Upload size={18} /> Change Image
-                                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                              </label>
-                            </div>
+                    {(previewUrl || existingImageUrl) ? (
+                      <div className="space-y-4">
+                        <div className="relative w-full max-w-lg aspect-video bg-black/50 rounded-2xl overflow-hidden border border-white/10 group shadow-2xl">
+                          <img src={previewUrl || existingImageUrl} alt="Cover" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-xl border border-white/20 backdrop-blur-md font-medium flex items-center gap-2">
+                              <Upload size={18} /> Change Image
+                              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </label>
                           </div>
-
-                          {imageProgress > 0 && imageProgress < 100 && (
-  <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-2">
-    <div className="w-full bg-gray-600 h-1 rounded-full overflow-hidden">
-       <div 
-         className="bg-green-500 h-full transition-all duration-300" 
-         style={{ width: `${imageProgress}%` }} 
-       />
-    </div>
-    <p className="text-center text-[10px] text-white mt-1">{imageProgress}%</p>
-  </div>
-)}
                         </div>
-                      ) : (
-                        <label className="w-full max-w-md aspect-video border-2 border-dashed border-gray-600 hover:border-indigo-500 bg-gray-900/50 rounded-xl flex flex-col items-center justify-center cursor-pointer">
-                          <ImageIcon size={48} className="text-gray-600 mb-2" />
-                          <span className="text-gray-500">Click to upload cover image</span>
-                          <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                        </label>
-                      )}
-                    </div>
+                        {imageProgress > 0 && imageProgress < 100 && (
+                          <div className="w-full max-w-lg">
+                             <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                               <div className="bg-green-500 h-full transition-all duration-300" style={{ width: `${imageProgress}%` }} />
+                             </div>
+                             <p className="text-right text-[10px] text-gray-400 mt-1">{imageProgress}%</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <label className="w-full max-w-lg aspect-video border-2 border-dashed border-white/10 hover:border-indigo-500/50 bg-[#1e1e1e]/30 hover:bg-[#1e1e1e]/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all group">
+                        <div className="p-4 bg-white/5 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                            <ImageIcon size={32} className="text-gray-500 group-hover:text-indigo-400" />
+                        </div>
+                        <span className="text-gray-400 font-medium group-hover:text-white">Click to upload cover image</span>
+                        <span className="text-xs text-gray-600 mt-1">16:9 ratio recommended</span>
+                        <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                      </label>
+                    )}
                   </div>
                 </div>
               </div>
             )}
 
             {currentStep === 3 && (
-              <div>
-                <div className="flex items-center gap-3 text-indigo-400 mb-6">
-                  <CheckCircle className="w-7 h-7" />
-                  <h1 className="text-3xl font-bold">Review & Submit</h1>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-white mb-2">Review & Submit</h1>
+                  <p className="text-gray-500">Double check your product details.</p>
                 </div>
 
-                <div className="space-y-6 bg-gray-800/30 p-6 rounded-2xl border border-white/5">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-400">Product Name</p>
-                      <p className="font-semibold text-lg">{productName}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-400">Price</p>
-                      <p className="font-semibold text-lg text-green-400">${price || 0}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-400">Type</p>
-                      <p className="text-medium">{applicationType}</p>
-                    </div>
-
-                    <div>
-                      <p className="text-gray-400">OS Support</p>
-                      <div className="flex gap-2 mt-1">
-                        {osTags.map((os) => (
-                          <span key={os} className="bg-gray-700 px-2 py-1 rounded text-xs">
-                            {os}
-                          </span>
-                        ))}
+                <div className="space-y-8">
+                  <div className="bg-[#05050A] p-8 rounded-3xl border border-white/10 shadow-2xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                      <div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Product Name</p>
+                        <p className="text-2xl font-bold text-white">{productName}</p>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-700 pt-4">
-                    <p className="text-gray-400 text-sm mb-2">Uploaded Packages</p>
-                    <div className="space-y-2">
-                      {osTags.map((os) => (
-                        <div
-                          key={os}
-                          className="flex justify-between items-center bg-gray-900/50 p-2 rounded border border-gray-700 text-sm"
-                        >
-                          <span className="text-indigo-300">{os}:</span>
-                          <span
-                            className={
-                              filesByOS[os] || existingDownloadLinks[os]
-                                ? "text-green-400"
-                                : "text-yellow-500 italic"
-                            }
-                          >
-                            {filesByOS[os]?.name ||
-                              existingDownloadLinks[os]?.split("/").pop() ||
-                              (isEditMode ? "Unchanged (missing new file)" : "Missing file")}
-                          </span>
+                      <div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Price</p>
+                        <p className="text-2xl font-bold text-green-400">${price || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Type</p>
+                        <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-sm text-indigo-300 font-medium">{applicationType}</span>
+                      </div>
+                      <div>
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">OS Support</p>
+                        <div className="flex gap-2">
+                          {osTags.map((os) => (
+                            <span key={os} className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-sm text-gray-300">
+                              {os}
+                            </span>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t border-white/10 pt-6">
+                        <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-4">Uploaded Files</p>
+                        <div className="space-y-3">
+                        {osTags.map((os) => (
+                            <div key={os} className="flex justify-between items-center bg-[#1e1e1e]/50 p-3 rounded-xl border border-white/5">
+                            <span className="text-white font-medium text-sm flex items-center gap-2">
+                                <Monitor size={16} className="text-gray-500" /> {os}
+                            </span>
+                            <span className={`text-sm ${filesByOS[os] || existingDownloadLinks[os] ? "text-green-400 flex items-center gap-1" : "text-yellow-500 italic"}`}>
+                                {filesByOS[os] || existingDownloadLinks[os] ? <><CheckCircle size={14} /> Ready</> : "Missing"}
+                            </span>
+                            </div>
+                        ))}
+                        </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-700 pt-4">
-                    <p className="text-gray-400 text-sm mb-2">Cover Image</p>
-
-                    {(previewUrl || existingImageUrl) && (
-                      <div className="mt-2">
-                        <img
-                          src={previewUrl || existingImageUrl}
-                          alt="Preview"
-                          className="h-16 w-28 object-cover rounded border border-slate-600"
-                        />
+                  <div className="bg-[#05050A] p-6 rounded-3xl border border-white/10">
+                    <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-4">Cover Preview</p>
+                    {(previewUrl || existingImageUrl) ? (
+                      <div className="rounded-xl overflow-hidden border border-white/10 shadow-lg max-w-sm">
+                        <img src={previewUrl || existingImageUrl} alt="Preview" className="w-full h-auto" />
                       </div>
-                    )}
+                    ) : <p className="text-gray-600 italic">No image uploaded</p>}
                   </div>
                 </div>
               </div>
             )}
 
-            <div className="mt-6 pt-6 border-t border-gray-700/50">
+            <div className="mt-10 pt-6 border-t border-white/10">
               {message && (
-                <div
-                  className={`mb-4 px-4 py-3 rounded-lg text-sm font-semibold flex items-center ${
-                    isSuccess
-                      ? "bg-green-900/30 text-green-400 border border-green-800"
-                      : "bg-red-900/30 text-red-400 border-red-800"
-                  }`}
-                >
-                  {message}
+                <div className={`mb-6 px-4 py-3 rounded-xl text-sm font-medium border flex items-center gap-2 ${isSuccess ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                  {isSuccess ? <CheckCircle size={18} /> : <X size={18} />} {message}
                 </div>
               )}
 
               <div className="flex justify-between items-center">
                 {currentStep > 1 && !isSuccess ? (
-                  <button
-                    onClick={handlePrevious}
-                    className="flex items-center px-6 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300"
-                  >
+                  <button onClick={handlePrevious} className="flex items-center px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-white font-medium transition-colors">
                     <ArrowLeft className="w-4 h-4 mr-2" /> Back
                   </button>
-                ) : (
-                  <div></div>
-                )}
+                ) : <div></div>}
 
                 {currentStep < 3 ? (
-                  <button
-                    onClick={handleNext}
-                    className="flex items-center px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
-                  >
+                  <button onClick={handleNext} className="flex items-center px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95">
                     Next Step <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
                 ) : (
                   <>
                     {isSuccess ? (
-                      <Link
-                        to="/product"
-                        className="flex items-center px-8 py-3 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500"
-                      >
-                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to list
+                      <Link to="/product" className="flex items-center px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95">
+                        <ArrowLeft className="w-4 h-4 mr-2" /> Back to Marketplace
                       </Link>
                     ) : (
-                      <button
-                        onClick={handleFinalSubmit}
+                      <button 
+                        onClick={handleFinalSubmit} 
                         disabled={loading}
-                        className={`flex items-center px-8 py-3 rounded-xl font-bold text-white ${
-                          loading ? "bg-gray-600 cursor-not-allowed" : "bg-green-600 hover:bg-green-500"
-                        }`}
+                        className={`flex items-center px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95
+                          ${loading ? "bg-gray-600 cursor-not-allowed" : "bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-green-500/20"}`}
                       >
                         {loading ? "Processing..." : isEditMode ? "Save Changes" : "Submit Product"}
                       </button>
@@ -701,11 +649,7 @@ const NewProduct = () => {
         </div>
       </div>
 
-      <NotificationModal
-        message={modalMessage}
-        isVisible={isModalVisible}
-        onClose={() => setIsModalVisible(false)}
-      />
+      <NotificationModal message={modalMessage} isVisible={isModalVisible} onClose={() => setIsModalVisible(false)} />
     </div>
   );
 };

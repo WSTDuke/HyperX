@@ -1,4 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
+import { EnvelopeOpenIcon } from "@heroicons/react/24/outline"; // Cần cài heroicons nếu chưa có, hoặc dùng icon khác
 
 export default function VerifyPage() {
     const location = useLocation();
@@ -6,63 +7,48 @@ export default function VerifyPage() {
     const message = location.state?.message || "Please verify your email";
 
     return (
-        <div className="relative isolate px-6 pt-14 lg:px-8 bg-gray-900 min-h-screen">
+        <div className="relative isolate flex items-center justify-center min-h-screen px-4 bg-[#05050A] overflow-hidden">
 
-            {/* === TOP GRADIENT (GIỮ NGUYÊN) === */}
-            <div
-                aria-hidden="true"
-                className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-            >
-                <div
-                    style={{
-                        clipPath:
-                            "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-                    }}
-                    className="relative left-[calc(50%-11rem)] aspect-1155/678 w-144.5 -translate-x-1/2 rotate-30 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-288.75"
-                />
-            </div>
+            {/* NOISE & AMBIENT LIGHT */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            {/* === CONTENT BOX (CSS LẠI) === */}
-            <div className="mx-auto max-w-xl py-32 sm:py-48 lg:py-20">
-                <div className="relative bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-10 py-12 shadow-2xl shadow-black/40">
-                    <h1 className="text-center text-4xl font-bold tracking-tight text-white">
-                        Check Your Email
-                    </h1>
-
-                    <p className="mt-4 text-center text-gray-300 text-lg leading-relaxed">
-                        {message}
-                    </p>
-
-                    {email && (
-                        <p className="mt-2 text-center text-sm text-gray-400">
-                            A confirmation link was sent to{" "}
-                            <span className="font-semibold text-indigo-400">{email}</span>
-                        </p>
-                    )}
-
-                    <div className="mt-8 flex justify-center">
-                        <Link
-                            to="/signin"
-                            className="px-5 py-2.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 transition font-semibold text-white shadow-lg shadow-indigo-500/20"
-                        >
-                            Go to Sign In
-                        </Link>
-                    </div>
+            {/* CARD */}
+            <div className="relative w-full max-w-lg bg-[#0B0D14]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 shadow-2xl text-center z-10">
+                
+                {/* Icon Circle */}
+                <div className="mx-auto w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mb-6 ring-1 ring-indigo-500/30">
+                    {/* SVG Icon thay thế nếu không cài heroicons */}
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-indigo-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    </svg>
                 </div>
-            </div>
 
-            {/* === BOTTOM GRADIENT (GIỮ NGUYÊN) === */}
-            <div
-                aria-hidden="true"
-                className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-            >
-                <div
-                    style={{
-                        clipPath:
-                            "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-                    }}
-                    className="relative left-[calc(50%+3rem)] aspect-1155/678 w-144.5 -translate-x-1/2 bg-linear-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-288.75"
-                />
+                <h1 className="text-3xl font-bold tracking-tight text-white mb-3">
+                    Check Your Email
+                </h1>
+
+                <p className="text-gray-400 text-lg leading-relaxed mb-6">
+                    {message}
+                </p>
+
+                {email && (
+                    <div className="bg-white/5 border border-white/10 rounded-lg py-3 px-4 mb-8 inline-block">
+                        <span className="text-indigo-300 font-medium">{email}</span>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                    <Link
+                        to="/signin"
+                        className="w-full rounded-xl bg-indigo-600 py-3 font-semibold text-white shadow-lg shadow-indigo-500/25 hover:bg-indigo-500 transition-all active:scale-[0.98]"
+                    >
+                        Go to Sign In
+                    </Link>
+                    <Link to="/" className="text-sm font-medium text-gray-500 hover:text-gray-300 py-2 transition-colors">
+                        Back to home
+                    </Link>
+                </div>
             </div>
         </div>
     );

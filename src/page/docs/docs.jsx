@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Search, ArrowRight, Menu, X } from 'lucide-react';
+import { BookOpen, Search, ArrowRight, Menu, X, ChevronRight, Hash } from 'lucide-react';
 
-// --- MOCK DATA (100% English Content) ---
+// --- MOCK DATA (Giữ nguyên nội dung của bạn) ---
 const mockDocsContent = {
-    // 1. Getting Started
     "intro": {
         title: "Introduction to the HyperX Ecosystem",
         content: `Welcome to HyperX! This platform is built to connect the creative community and provide essential tools for product development and sharing.
         \n\nHere you can find Products to buy or sell, engage in the Community to share knowledge, or consult this Documentation (Docs) to gain a deeper understanding of our core APIs and features.`,
         next: "api-overview"
     },
-    // 2. API Overview
     "api-overview": {
         title: "API Overview: Supabase Integration",
         content: `Most core functionalities of HyperX, including user management, community posts, and product details, are built on top of Supabase.
@@ -23,7 +21,6 @@ const mockDocsContent = {
         code: `const fetchProducts = async () => {\n  // Fetching a list of products\n  const { data, error } = await supabase\n    .from('products')\n    .select('id, name, price, image_url')\n    .order('created_at', { ascending: false });\n  if (error) console.error(error);\n  return data;\n};`,
         next: "community-posts"
     },
-    // 3. Community Posts
     "community-posts": {
         title: "Community: Creating, Editing, and Deleting Posts",
         content: `Community posts are stored in the 'community_posts' table.
@@ -31,7 +28,6 @@ const mockDocsContent = {
         \n**Editing/Deleting:** Requires the user to be the owner of the post. This is enforced via Row Level Security (RLS) policies on the 'community_posts' table, typically checking if \`auth.uid() = user_id\`.`,
         next: "product-upload"
     },
-    // 4. Product Upload
     "product-upload": {
         title: "Product Upload & Asset Storage Management",
         content: `Your product metadata is stored in the 'products' table, while digital assets (like cover images) are stored in Supabase Storage.
@@ -40,13 +36,12 @@ const mockDocsContent = {
         \n3. Insert the product metadata (including the Public URL string) into the 'products' table.`,
         next: "profile-and-follows"
     },
-    // 5. Profile & Follows
     "profile-and-follows": {
         title: "Profile, Stats, and Follows Logic Optimization",
         content: `Detailed user information is maintained in the 'profiles' table.
         \n\nFollow/Unfollow functionality uses an intermediate 'follows' table (\`follower_id\`, \`following_id\`).
         \n\nTo optimize profile loading speed, multiple necessary API calls (post count, follower count, product list, and follow status check) are executed concurrently using JavaScript's \`Promise.all()\`. This ensures the total loading time is determined by the slowest query, not the sum of all queries.`,
-        next: null // End of docs
+        next: null 
     }
 };
 
@@ -70,45 +65,46 @@ const navigationStructure = [
     },
 ];
 
-// --- SUB-COMPONENT: DocsSidebar ---
+// --- COMPONENT: DocsSidebar (UI đã nâng cấp) ---
 const DocsSidebar = ({ activeDoc, setActiveDoc, isMobileOpen, setIsMobileOpen }) => {
     return (
         <aside className={`
-            fixed inset-y-0 pt-4 left-0 z-40 md:relative md:translate-x-0 transition-transform duration-300
-            w-64 border-r border-gray-700 bg-[#1e293b]/80 md:bg-transparent md:border-r-0 flex-shrink-0 
+            fixed inset-y-0 pt-20 lg:pt-24 left-0 z-40 lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out
+            w-72 border-r border-white/10 bg-[#05050A]/95 backdrop-blur-xl lg:bg-transparent lg:border-r border-dashed border-gray-800 flex-shrink-0 
             ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-            md:block md:w-64 overflow-y-auto custom-scrollbar
+            overflow-y-auto custom-scrollbar h-screen
         `}>
             <div className="p-6">
-                <div className="flex items-center justify-between md:justify-start gap-2 mb-8 text-indigo-400">
-                    <BookOpen size={24} />
-                    <h2 className="font-bold text-xl text-white">HyperX Docs</h2>
-                    <button onClick={() => setIsMobileOpen(false)} className="md:hidden text-gray-400 hover:text-white"><X size={24} /></button>
+                <div className="flex items-center justify-between lg:hidden mb-6 text-white">
+                    <span className="font-bold text-lg">Menu</span>
+                    <button onClick={() => setIsMobileOpen(false)} className="p-2 hover:bg-white/10 rounded-lg"><X size={20} /></button>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                     {navigationStructure.map((section) => (
                         <div key={section.id}>
-                            <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2 border-b border-gray-700 pb-1">
-                                {section.title}
+                            <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 px-3">
+                                <Hash size={12} /> {section.title}
                             </h3>
-                            <ul className="space-y-1 mt-2">
+                            <ul className="space-y-1">
                                 {section.children.map((item) => (
-                                    <li 
-                                        key={item.id}
-                                        onClick={() => {
-                                            setActiveDoc(item.id);
-                                            setIsMobileOpen(false); // Close menu on select (mobile)
-                                        }}
-                                        className={`
-                                            px-3 py-2 rounded-lg cursor-pointer transition-colors text-sm font-medium
-                                            ${activeDoc === item.id 
-                                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" 
-                                                : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
-                                            }
-                                        `}
-                                    >
-                                        {item.title}
+                                    <li key={item.id}>
+                                        <button 
+                                            onClick={() => {
+                                                setActiveDoc(item.id);
+                                                setIsMobileOpen(false);
+                                            }}
+                                            className={`
+                                                w-full text-left px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 text-sm font-medium flex items-center justify-between group
+                                                ${activeDoc === item.id 
+                                                    ? "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
+                                                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                                                }
+                                            `}
+                                        >
+                                            {item.title}
+                                            {activeDoc === item.id && <ChevronRight size={14} className="opacity-100" />}
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
@@ -116,8 +112,6 @@ const DocsSidebar = ({ activeDoc, setActiveDoc, isMobileOpen, setIsMobileOpen })
                     ))}
                 </div>
             </div>
-            {/* Mobile Overlay */}
-            {isMobileOpen && <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 md:hidden" onClick={() => setIsMobileSidebarOpen(false)}></div>}
         </aside>
     );
 };
@@ -130,116 +124,157 @@ const DocsPage = () => {
     const [filteredContent, setFilteredContent] = useState(mockDocsContent['intro']);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
     
-    // Load content when activeDoc changes
     useEffect(() => {
         const doc = mockDocsContent[activeDoc] || mockDocsContent['intro'];
         setFilteredContent(doc);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [activeDoc]);
 
      const handleSearch = (e) => {
-    e.preventDefault();
-    const query = searchTerm.trim().toLowerCase();
+        e.preventDefault();
+        const query = searchTerm.trim().toLowerCase();
+        if (query === '') {
+            setActiveDoc('intro');
+            return;
+        }
+        const keys = Object.keys(mockDocsContent);
+        const searchResults = keys.filter(key => mockDocsContent[key].title.toLowerCase().includes(query));
 
-    if (query === '') {
-        setActiveDoc('intro');
-        return;
-    }
-
-    const keys = Object.keys(mockDocsContent);
-
-    const searchResults = keys.filter(key => {
-        const doc = mockDocsContent[key];
-        return doc.title.toLowerCase().includes(query);
-    });
-
-    if (searchResults.length > 0) {
-        setActiveDoc(searchResults[0]);
-        setSearchTerm('');
-    } else {
-        setFilteredContent({
-            title: "No Documentation Found",
-            content: `We could not find any document matching "${searchTerm}".`,
-            isNotFound: true
-        });
-    }
-};
-
+        if (searchResults.length > 0) {
+            setActiveDoc(searchResults[0]);
+            setSearchTerm('');
+        } else {
+            setFilteredContent({
+                title: "No Results Found",
+                content: `We could not find any document matching "${searchTerm}".`,
+                isNotFound: true
+            });
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-gray-100 font-sans pt-16">
-            <div className="flex h-full max-w-7xl mx-auto md:h-screen md:max-h-[calc(100vh-60px)]">
+        // MASTER CONTAINER: Màu nền đen sâu đồng bộ #05050A
+        <div className="min-h-screen bg-[#05050A] text-gray-300 font-sans pt-16 relative isolate overflow-hidden">
+            
+            {/* --- AMBIENT LIGHTING --- */}
+            {/* Ánh sáng tím mờ ở góc phải dưới */}
+            <div className="fixed bottom-0 right-0 -z-10 w-[40rem] h-[40rem] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+             {/* Ánh sáng xanh mờ ở góc trái trên */}
+            <div className="fixed top-20 left-0 -z-10 w-[30rem] h-[30rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+            <div className="flex max-w-[90rem] mx-auto">
                 
-                {/* --- SIDEBAR (Desktop & Mobile) --- */}
+                {/* --- SIDEBAR --- */}
                 <DocsSidebar 
                     activeDoc={activeDoc} 
                     setActiveDoc={setActiveDoc} 
                     isMobileOpen={isMobileSidebarOpen}
-                    setIsMobileSidebarOpen={setIsMobileSidebarOpen}
+                    setIsMobileOpen={setIsMobileSidebarOpen}
                 />
 
-                {/* --- MAIN CONTENT --- */}
-                <main className="flex-1 px-4 md:px-10 py-8 md:pt-10 overflow-y-auto custom-scrollbar">
+                {/* --- MAIN CONTENT AREA --- */}
+                <main className="flex-1 min-w-0 py-10 px-4 sm:px-6 lg:px-12 lg:py-12">
                     
-                    {/* Header/Search Bar (Mobile & Desktop) */}
-                    <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-700/50">
-                        
-                        <div className="md:hidden">
-                            <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition">
-                                <Menu size={20} />
+                    <div className="max-w-4xl mx-auto">
+                        {/* Mobile Menu Trigger & Search */}
+                        <div className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between">
+                            <button 
+                                onClick={() => setIsMobileSidebarOpen(true)} 
+                                className="lg:hidden flex items-center gap-2 text-white bg-white/5 border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10 w-full md:w-auto"
+                            >
+                                <Menu size={20} /> <span className="text-sm font-medium">Menu</span>
                             </button>
-                        </div>
-                        
-                        <form onSubmit={handleSearch} className="relative flex-1 md:flex-none md:w-80 ml-4 md:ml-0">
-                            <input 
-                                type="text" 
-                                placeholder="Search documentation..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-gray-800 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                            />
-                            <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
-                        </form>
-                    </div>
-
-                    {/* Documentation Content */}
-                    {filteredContent.isNotFound ? (
-                        <div className="text-center py-20 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
-                            <BookOpen className="mx-auto h-12 w-12 text-gray-600 mb-3" />
-                            <h3 className="text-lg font-medium text-gray-400">{filteredContent.title}</h3>
-                            <p className="text-gray-500">{filteredContent.content}</p>
-                        </div>
-                    ) : (
-                        <article className="prose prose-invert max-w-none">
-                            <h1 className="text-4xl font-extrabold text-white mb-4 border-b border-indigo-500/50 pb-2">{filteredContent.title}</h1>
-                            <div className="text-gray-300 whitespace-pre-line leading-relaxed text-lg">
-                                {filteredContent.content}
-                            </div>
                             
-                            {/* Code Block (if available) */}
-                            {filteredContent.code && (
-                                <div className="mt-8 bg-gray-900 border border-gray-700 rounded-xl overflow-hidden shadow-xl">
-                                    <div className="bg-gray-800 px-4 py-2 text-sm font-semibold text-indigo-400 border-b border-gray-700">JavaScript Example</div>
-                                    <pre className="p-4 overflow-x-auto text-sm bg-black/50 text-green-300">
-                                        <code>{filteredContent.code}</code>
-                                    </pre>
+                            {/* Search Bar Style mới */}
+                            <form onSubmit={handleSearch} className="relative w-full md:w-96 group">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search className="h-4 w-4 text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
                                 </div>
-                            )}
+                                <input 
+                                    type="text" 
+                                    placeholder="Search documentation..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-white/10 rounded-xl leading-5 bg-white/5 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm transition-all shadow-lg shadow-black/20"
+                                />
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span className="text-gray-600 text-xs border border-gray-700 rounded px-1.5 py-0.5">/</span>
+                                </div>
+                            </form>
+                        </div>
 
-                            {/* Next Document Button */}
-                            {filteredContent.next && (
-                                <div className="mt-12 pt-6 border-t border-gray-700">
-                                    <button 
-                                        onClick={() => setActiveDoc(filteredContent.next)}
-                                        className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-medium transition"
-                                    >
-                                        Next: {mockDocsContent[filteredContent.next].title} <ArrowRight size={18} />
-                                    </button>
+                        {/* DOCUMENT CONTENT */}
+                        {filteredContent.isNotFound ? (
+                            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+                                <Search className="mx-auto h-12 w-12 text-gray-600 mb-4 opacity-50" />
+                                <h3 className="text-xl font-medium text-white mb-2">{filteredContent.title}</h3>
+                                <p className="text-gray-400">{filteredContent.content}</p>
+                            </div>
+                        ) : (
+                            <article className="animate-fade-in">
+                                {/* Badge category (Giả lập) */}
+                                <div className="inline-flex items-center rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-300 mb-6">
+                                    Documentation
                                 </div>
-                            )}
-                        </article>
-                    )}
+                                
+                                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-8">
+                                    {filteredContent.title}
+                                </h1>
+
+                                {/* Nội dung văn bản - Custom Prose cho Dark Mode */}
+                                <div className="prose prose-invert prose-lg max-w-none text-gray-400 prose-headings:text-gray-200 prose-strong:text-white prose-code:text-indigo-300 prose-code:bg-indigo-500/10 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
+                                    {filteredContent.content.split('\n').map((paragraph, idx) => (
+                                        <p key={idx} className="mb-4 leading-relaxed">{paragraph}</p>
+                                    ))}
+                                </div>
+                                
+                                {/* Code Block UI - Style IDE */}
+                                {filteredContent.code && (
+                                    <div className="mt-8 rounded-2xl overflow-hidden bg-[#0B0D14] border border-white/10 shadow-2xl group">
+                                        <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-3 h-3 rounded-full bg-red-500/20 group-hover:bg-red-500/80 transition-colors"></div>
+                                                <div className="w-3 h-3 rounded-full bg-yellow-500/20 group-hover:bg-yellow-500/80 transition-colors"></div>
+                                                <div className="w-3 h-3 rounded-full bg-green-500/20 group-hover:bg-green-500/80 transition-colors"></div>
+                                            </div>
+                                            <span className="text-xs text-gray-500 font-mono">example.js</span>
+                                        </div>
+                                        <div className="p-6 overflow-x-auto custom-scrollbar">
+                                            <pre className="text-sm font-mono leading-relaxed text-indigo-100">
+                                                <code>{filteredContent.code}</code>
+                                            </pre>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Navigation Footer */}
+                                {filteredContent.next && (
+                                    <div className="mt-16 pt-8 border-t border-white/10 flex justify-end">
+                                        <button 
+                                            onClick={() => setActiveDoc(filteredContent.next)}
+                                            className="group flex flex-col items-end text-right"
+                                        >
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider mb-1">Next Article</span>
+                                            <span className="flex items-center gap-2 text-indigo-400 font-semibold group-hover:text-indigo-300 transition-colors text-lg">
+                                                {mockDocsContent[filteredContent.next].title.split(':')[0]} {/* Lấy phần title ngắn gọn */}
+                                                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                            </span>
+                                        </button>
+                                    </div>
+                                )}
+                            </article>
+                        )}
+                    </div>
                 </main>
             </div>
+            
+            {/* Mobile Overlay */}
+            {isMobileSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden" 
+                    onClick={() => setIsMobileSidebarOpen(false)}
+                />
+            )}
         </div>
     );
 };

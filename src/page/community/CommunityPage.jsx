@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../../routes/supabaseClient";
-import {Search} from "lucide-react";
+import { Search, Plus, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import PostFormModal from "./PostFormModal";
 import PostItem from "./PostItem";
@@ -12,8 +12,8 @@ export default function Community({ user }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-    const [showSearchInput, setShowSearchInput] = useState(false);
 
+    // Logic fetch data giữ nguyên
     useEffect(() => {
         const load = async () => {
             let u = user;
@@ -36,7 +36,6 @@ export default function Community({ user }) {
         else setPosts(data || []);
     }, []);
 
-
     useEffect(() => {
         const fetch = async () => {
             setLoading(true); 
@@ -45,7 +44,6 @@ export default function Community({ user }) {
         };
         fetch();
     }, [loadPosts]);
-
 
     const submitPost = async () => {
         if (!currentUser || !currentUser.id) return alert("Lỗi: Không tìm thấy thông tin người dùng!");
@@ -70,104 +68,86 @@ export default function Community({ user }) {
     );
 
     return (
-        <div className="relative isolate pt-16 px-6 md:px-48 bg-gray-900 overflow-hidden min-h-screen">
-            {/* Background Blur Effect - Giữ nguyên */}
-            <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80 pointer-events-none">
-                <div style={{ clipPath: "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)" }} className="relative left-[calc(50%-11rem)] aspect-1155/678 w-[1155px] -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[2300px]" />
-            </div>
+        // 1. KEY FIX: h-screen + overflow-hidden (Khóa toàn bộ trang web lại)
+        <div className="bg-[#05050A] h-screen w-screen overflow-hidden text-gray-300 font-sans pt-16 relative isolate flex flex-col">
+            
+            {/* Background Effects */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
+            <div className="fixed top-0 right-0 -z-10 w-[40rem] h-[40rem] bg-indigo-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            {/* Khung chính Community (Tương tự Setting) */}
-            <div className="h-[750px] flex mb-0 justify-center w-full"> 
+            {/* CONTAINER CHÍNH */}
+            <div className="flex flex-col flex-1 max-w-5xl mx-auto w-full h-full px-4 md:px-0 overflow-hidden">
                 
-                {/* Layout chính: Có viền, bo góc, background mờ */}
-                <div className="relative w-full max-w-7xl bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/40 flex overflow-hidden">
-                    
-                    {/* Main Content (Vùng Posts) - Đặt flex-col để chia dọc header và list */}
-                    <main className="flex-1 p-4 sm:p-6 text-white flex flex-col"> 
+                {/* 2. HEADER KHU VỰC COMMUNITY (ĐỨNG YÊN) */}
+                {/* flex-shrink-0: Đảm bảo header không bị co lại khi list dài */}
+                {/* z-10: Để nổi lên trên khi nội dung bên dưới cuộn qua */}
+                <div className="flex-shrink-0 py-6 z-10 relative">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-[#0B0D14]/80 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl">
                         
-                        {/* PHẦN 1: HEADER (CỐ ĐỊNH) - Tối giản */}
-                        <div className="pb-2 flex-shrink-0">
-                            <div className="pb-3 border-b border-gray-700">
-                                
-                                {/* Dòng chứa Tiêu đề/Icon Tìm kiếm/Nút Create Post */}
-                                <div className="flex justify-between items-center mb-3">
-
-                                    {/* Tiêu đề/Input Tìm kiếm */}
-                                    <div className="flex-1 flex items-center min-w-0"> 
-                                        {/* Tiêu đề Community Feed */}
-                                        <h2 className={`text-2xl font-bold text-white mr-4 ${showSearchInput ? 'hidden sm:block' : 'block'}`}>Community Feed</h2>
-
-                                        {/* Icon Kính lúp (Để hiển thị Input) */}
-                                        {!showSearchInput && (
-                                            <button 
-                                                onClick={() => setShowSearchInput(true)} 
-                                                className="p-2 rounded-full text-gray-400 hover:bg-gray-700/50 hover:text-white transition block sm:hidden" // Chỉ hiển thị trên mobile
-                                                title="Search posts"
-                                            >
-                                                <Search size={20} />
-                                            </button>
-                                        )}
-                                        
-                                        {/* Ô Input Tìm kiếm (Hiển thị khi click icon hoặc trên desktop) */}
-                                        
-                                    </div>
-                                    
-                                    {/* Nút Create Post / Login */}
-                                    {(showSearchInput || window.innerWidth >= 640) && ( // Giả định 640px là sm breakpoint
-                                            <div className={`relative ${showSearchInput ? 'w-full max-w-md' : 'hidden sm:block w-full max-w-xs mr-4'}`}>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Search topics..." 
-                                                    value={searchQuery} 
-                                                    onChange={(e) => setSearchQuery(e.target.value)} 
-                                                    className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-sm" 
-                                                    autoFocus
-                                                />
-                                                <Search className="absolute left-3 top-2.5 text-gray-400" size={16} /> 
-                                            </div>
-                                        )}
-                                    <div className="flex-shrink-0 relative">
-                                        {currentUser ? (
-                                            <button 
-                                                onClick={() => setShowModal(true)} 
-                                                className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-500 transition whitespace-nowrap text-sm"
-                                            >
-                                                Create Post
-                                            </button>
-                                        ) : (
-                                            <Link to="/signin" className="px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-500 transition whitespace-nowrap text-sm">
-                                                Log in to Post
-                                            </Link>
-                                        )}
-
-                                        {/* GIẢ ĐỊNH: POPUP THAY THẾ MODAL - CHỈ LÀ HƯỚNG DẪN */}
-                                        {/* Để modal không che phủ, bạn cần phải thay thế PostFormModal bằng một Popover component sử dụng position: absolute; */}
-                                        
-                                        {/* {showModal && (
-                                            <div className="absolute right-0 top-full mt-2 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-20 p-4">
-                                                // Đây là nơi PostFormModal sẽ được đặt nếu nó là một Popover
-                                                <p className="text-sm text-yellow-300">Thay thế PostFormModal bằng component Popover/Dropdown tại đây!</p>
-                                            </div>
-                                        )} */}
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                                <MessageSquare className="text-indigo-500" /> Community Feed
+                            </h1>
+                            <p className="text-gray-400 text-sm mt-1">Share knowledge, ask questions, and connect.</p>
                         </div>
 
-                        {/* PHẦN 2: DANH SÁCH BÀI VIẾT (SCROLL) */}
-                        <div className="flex-1 overflow-y-auto pt-2 custom-scrollbar">
-                            {loading && posts.length === 0 ? <p className="text-gray-400 text-center py-10">Loading posts...</p> : filteredPosts.length === 0 ? <p className="text-gray-400 text-center py-10">{searchQuery ? "No posts found matching your search." : "No posts yet."}</p> : (
-                                <div className="space-y-4"> 
-                                    {filteredPosts.map((post) => (
-                                        <PostItem key={post.id} post={post} currentUser={currentUser} onPostDeleted={handlePostDeleted} />
-                                    ))}
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            {/* Search Bar */}
+                            <div className="relative group flex-1 md:w-72">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Search size={16} className="text-gray-500 group-focus-within:text-indigo-400 transition-colors" />
                                 </div>
+                                <input
+                                    type="text"
+                                    placeholder="Search topics..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="block w-full pl-10 pr-3 py-2.5 border border-white/10 rounded-xl leading-5 bg-white/5 text-gray-300 placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 sm:text-sm transition-all shadow-inner"
+                                />
+                            </div>
+
+                            {/* Create Post Button */}
+                            {currentUser ? (
+                                <button 
+                                    onClick={() => setShowModal(true)} 
+                                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-indigo-500/20 active:scale-95 text-sm whitespace-nowrap"
+                                >
+                                    <Plus size={18} />
+                                    <span className="hidden sm:inline">New Post</span>
+                                </button>
+                            ) : (
+                                <Link to="/signin" className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white border border-white/10 rounded-xl font-medium transition text-sm">
+                                    Log in to Post
+                                </Link>
                             )}
                         </div>
-                    </main>
+                    </div>
+                </div>
+
+                {/* 3. POST LIST (VÙNG CUỘN DUY NHẤT) */}
+                {/* flex-1: Chiếm hết phần không gian còn lại */}
+                {/* overflow-y-auto: Cho phép cuộn nội dung bên trong */}
+                <div className="flex-1 overflow-y-auto pb-20 custom-scrollbar scroll-smooth px-1">
+                    {loading && posts.length === 0 ? (
+                        <div className="flex justify-center py-20">
+                            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                    ) : filteredPosts.length === 0 ? (
+                        <div className="text-center py-20 border border-dashed border-white/10 rounded-3xl bg-white/5">
+                            <p className="text-gray-400">No posts found matching your search.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6"> 
+                            {filteredPosts.map((post) => (
+                                <PostItem key={post.id} post={post} currentUser={currentUser} onPostDeleted={handlePostDeleted} />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
-            {/* Giữ nguyên Modal cũ, nó sẽ vẫn là Overlay Full Screen */}
+
+            {/* Modal vẫn hoạt động bình thường */}
             <PostFormModal show={showModal} onClose={() => setShowModal(false)} onSubmit={submitPost} form={form} setForm={setForm} loading={loading} currentUser={currentUser} />
         </div>
     );

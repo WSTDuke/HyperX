@@ -20,7 +20,6 @@ const AuthSignUp = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Hàm handleSignUp đã được tối ưu hóa để xử lý đăng ký và điều hướng
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -28,14 +27,11 @@ const AuthSignUp = () => {
 
         const { email, password, name, phone } = formData;
 
-        // Gọi API đăng ký từ Supabase
         const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                // Đặt đường dẫn chuyển hướng sau khi xác thực email (tùy chọn)
                 emailRedirectTo: `${window.location.origin}/auth/callback`,
-                // Thêm dữ liệu tùy chỉnh vào user metadata
                 data: { full_name: name, phone_number: phone },
             },
         });
@@ -48,7 +44,6 @@ const AuthSignUp = () => {
             return;
         }
 
-        // ✔ Điều hướng sang trang verify sau khi đăng ký thành công
         navigate("/verify", {
             state: {
                 email,
@@ -57,51 +52,30 @@ const AuthSignUp = () => {
         });
     };
 
-    // Theo dõi trạng thái xác thực (được giữ lại cho các logic mở rộng sau này)
+    // Keep auth listener hook
     useEffect(() => {
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-            (event, session) => { 
-                // Có thể thêm logic điều hướng ở đây nếu người dùng đã đăng nhập
-            }
-        );
-        return () => {
-            authListener.subscription.unsubscribe();
-        };
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {});
+        return () => { authListener.subscription.unsubscribe(); };
     }, []);
 
     return (
-        <div className="relative isolate px-6 pt-14 pb-24 lg:px-8 bg-gray-900 min-h-screen">
+        <div className="relative isolate flex items-center justify-center min-h-screen px-4 py-12 sm:px-6 lg:px-8 bg-[#05050A] overflow-hidden">
+            
+            {/* NOISE & AMBIENT LIGHT */}
+            <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.04]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
+            <div className="absolute top-[-20%] left-[20%] w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            {/* Background Blob */}
-            <div
-                aria-hidden="true"
-                className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-            >
-                <div
-                    style={{
-                        clipPath:
-                            'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-                    }}
-                    className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-30 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-                />
-            </div>
+            {/* CARD */}
+            <div className="relative w-full max-w-md bg-[#0B0D14]/70 backdrop-blur-xl border border-white/10 rounded-3xl px-8 py-10 shadow-2xl z-10">
 
-            {/* Sign Up Card */}
-            <div className="relative max-w-md mx-auto bg-gray-900/60 backdrop-blur-xl border border-white/10 rounded-2xl px-10 py-12 shadow-2xl shadow-black/40">
+                <div className="text-center mb-8">
+                    <h2 className="text-3xl font-bold tracking-tight text-white">Create Account</h2>
+                    <p className="mt-2 text-sm text-gray-400">Join <span className="font-semibold text-indigo-400">HyperX</span> community today</p>
+                </div>
 
-                <h2 className="text-center text-3xl font-bold tracking-tight text-white">
-                    Sign up for <span className="text-3xl font-bold bg-gradient-to-r from-white to-indigo-500 bg-clip-text text-transparent">
-                        HyperX
-                    </span>
-                </h2>
-
-                <form onSubmit={handleSignUp} className="mt-8 space-y-6">
-
-                    {/* Name Field */}
+                <form onSubmit={handleSignUp} className="space-y-4">
                     <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-100">
-                            Name
-                        </label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
                         <input
                             id="name"
                             name="name"
@@ -110,17 +84,13 @@ const AuthSignUp = () => {
                             value={formData.name}
                             onChange={handleChange}
                             disabled={loading}
-                            className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-white
-                            outline outline-1 outline-white/10 placeholder:text-gray-500
-                            focus:outline-2 focus:outline-indigo-500"
+                            className="block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:bg-[#0B0D14] focus:ring-1 focus:ring-indigo-500 transition-all outline-none sm:text-sm"
+                            placeholder="John Doe"
                         />
                     </div>
 
-                    {/* Phone Field */}
                     <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-100">
-                            Phone
-                        </label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Phone Number</label>
                         <input
                             id="phone"
                             name="phone"
@@ -129,17 +99,13 @@ const AuthSignUp = () => {
                             value={formData.phone}
                             onChange={handleChange}
                             disabled={loading}
-                            className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-white
-                            outline outline-1 outline-white/10 placeholder:text-gray-500
-                            focus:outline-2 focus:outline-indigo-500"
+                            className="block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:bg-[#0B0D14] focus:ring-1 focus:ring-indigo-500 transition-all outline-none sm:text-sm"
+                            placeholder="+1 (555) 000-0000"
                         />
                     </div>
 
-                    {/* Email Field */}
                     <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-100">
-                            Email address
-                        </label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
                         <input
                             id="email"
                             name="email"
@@ -148,17 +114,13 @@ const AuthSignUp = () => {
                             value={formData.email}
                             onChange={handleChange}
                             disabled={loading}
-                            className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-white
-                            outline outline-1 outline-white/10 placeholder:text-gray-500
-                            focus:outline-2 focus:outline-indigo-500"
+                            className="block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:bg-[#0B0D14] focus:ring-1 focus:ring-indigo-500 transition-all outline-none sm:text-sm"
+                            placeholder="you@example.com"
                         />
                     </div>
 
-                    {/* Password Field */}
                     <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-100">
-                            Password
-                        </label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
                         <input
                             id="password"
                             name="password"
@@ -167,45 +129,38 @@ const AuthSignUp = () => {
                             value={formData.password}
                             onChange={handleChange}
                             disabled={loading}
-                            className="mt-2 block w-full rounded-md bg-white/5 px-3 py-2 text-white
-                            outline outline-1 outline-white/10 placeholder:text-gray-500
-                            focus:outline-2 focus:outline-indigo-500"
+                            className="block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:bg-[#0B0D14] focus:ring-1 focus:ring-indigo-500 transition-all outline-none sm:text-sm"
+                            placeholder="Create a strong password"
                         />
                     </div>
 
-                    {/* Message / Error Display */}
                     {message && (
-                        <div className="px-4 py-2 rounded-md text-center text-sm font-medium bg-red-900/50 text-red-300">
+                        <div className="p-3 rounded-lg text-sm font-medium bg-red-500/10 text-red-400 border border-red-500/20 text-center animate-in fade-in slide-in-from-top-1">
                             {message}
                         </div>
                     )}
 
-                    {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full rounded-md bg-indigo-500 py-2.5 font-semibold text-white
-                        hover:bg-indigo-400 transition disabled:opacity-50"
+                        className="w-full rounded-xl bg-indigo-600 py-3 mt-4 font-semibold text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? "Please wait..." : "Sign up"}
+                        {loading ? "Creating account..." : "Sign up"}
                     </button>
                 </form>
 
-                {/* Footer Links (Fixed: Changed <p> to <div>) */}
-                <div className="mt-6 text-center text-sm text-gray-400">
-                    <div className="pb-3">
-                        Already have an account?{" "}
-                        <Link to="/signin" className="font-semibold text-indigo-400 hover:text-indigo-300">
-                            Sign in
-                        </Link>
-                    </div>
-                    {/* Back to Home Link */}
-                    <Link to="/" className="block font-semibold text-indigo-400 hover:text-indigo-300 border-t border-gray-700 pt-3">
-                        Back to home
+                <div className="mt-8 pt-6 border-t border-white/10 text-center text-sm text-gray-400">
+                    Already have an account?{" "}
+                    <Link to="/signin" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+                        Sign in
+                    </Link>
+                </div>
+                <div className="mt-4 text-center">
+                    <Link to="/" className="text-sm font-medium text-gray-500 hover:text-white transition-colors">
+                        ← Back to home
                     </Link>
                 </div>
             </div>
-
         </div>
     );
 };
