@@ -19,7 +19,7 @@ const NotificationModal = ({ message, isVisible, onClose }) => {
           </div>
         </div>
         <div className="text-right mt-6">
-          <button onClick={onClose} className="bg-red-600 hover:bg-red-500 px-5 py-2 rounded-xl text-white font-medium transition-colors">
+          <button onClick={onClose} className="bg-red-600 hover:bg-red-500 px-5 py-2 rounded-xl text-white font-medium transition-colors shadow-lg shadow-red-900/20">
             Close
           </button>
         </div>
@@ -274,10 +274,10 @@ const NewProduct = () => {
   return (
     <div className="relative isolate min-h-screen bg-[#05050A] text-gray-300 font-sans pb-12 pt-24 overflow-hidden">
       
-      {/* Background Effects */}
+      {/* UPDATED: Background Effects (Cyan/Blue) */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-      <div className="fixed top-20 right-0 -z-10 w-[40rem] h-[40rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="fixed top-20 right-0 -z-10 w-[40rem] h-[40rem] bg-cyan-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-blue-900/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col lg:flex-row bg-[#0B0D14]/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl min-h-[600px]">
@@ -295,9 +295,10 @@ const NewProduct = () => {
                 ].map((item) => (
                   <div 
                     key={item.step}
+                    // UPDATED: Active state to Cyan
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-300
                       ${currentStep === item.step 
-                        ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
+                        ? "bg-cyan-600/10 text-cyan-400 border border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.1)]" 
                         : currentStep > item.step 
                           ? "text-green-400 hover:bg-white/5" 
                           : "text-gray-500"
@@ -333,7 +334,8 @@ const NewProduct = () => {
                       <input
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
-                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                        // UPDATED: Focus Cyan
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                         placeholder="e.g. Super App v1.0"
                       />
                     </div>
@@ -344,7 +346,8 @@ const NewProduct = () => {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         rows={4}
-                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none"
+                        // UPDATED: Focus Cyan
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all resize-none"
                         placeholder="What does your product do?"
                       />
                     </div>
@@ -355,7 +358,8 @@ const NewProduct = () => {
                         value={instructions}
                         onChange={(e) => setInstructions(e.target.value)}
                         rows={4}
-                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all resize-none"
+                        // UPDATED: Focus Cyan
+                        className="w-full bg-[#05050A] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all resize-none"
                         placeholder="How to install or use..."
                       />
                     </div>
@@ -368,7 +372,8 @@ const NewProduct = () => {
                           type="number"
                           value={price}
                           onChange={(e) => setPrice(e.target.value)}
-                          className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+                          // UPDATED: Focus Cyan
+                          className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-8 pr-4 py-3 text-white placeholder-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all"
                           placeholder="0 for free"
                         />
                       </div>
@@ -377,14 +382,15 @@ const NewProduct = () => {
 
                   <div className="space-y-8 lg:border-l lg:border-white/10 lg:pl-10">
                     <div>
-                      <label className="block text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Application Type</label>
+                      <label className="block text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4">Application Type</label>
                       <div className="space-y-3">
                         {["Software", "Game"].map((app) => (
                           <label
                             key={app}
+                            // UPDATED: Selected state to Cyan
                             className={`flex items-center p-4 rounded-xl border cursor-pointer transition-all duration-200
                               ${applicationType === app 
-                                ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]" 
+                                ? "border-cyan-500 bg-cyan-500/10 shadow-[0_0_15px_rgba(34,211,238,0.15)]" 
                                 : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                               }`}
                           >
@@ -392,7 +398,7 @@ const NewProduct = () => {
                               type="radio"
                               checked={applicationType === app}
                               onChange={() => setApplicationType(app)}
-                              className="w-5 h-5 accent-indigo-500"
+                              className="w-5 h-5 accent-cyan-500"
                             />
                             <span className={`ml-3 font-medium ${applicationType === app ? "text-white" : "text-gray-400"}`}>{app}</span>
                           </label>
@@ -401,14 +407,15 @@ const NewProduct = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">Supported Platforms</label>
+                      <label className="block text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4">Supported Platforms</label>
                       <div className="space-y-3">
                         {KNOWN_OS.map((os) => (
                           <label
                             key={os}
+                            // UPDATED: Selected state to Cyan
                             className={`flex items-center p-4 rounded-xl border cursor-pointer transition-all duration-200
                               ${osTags.includes(os) 
-                                ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.15)]" 
+                                ? "border-cyan-500 bg-cyan-500/10 shadow-[0_0_15px_rgba(34,211,238,0.15)]" 
                                 : "border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20"
                               }`}
                           >
@@ -416,7 +423,7 @@ const NewProduct = () => {
                               type="checkbox"
                               checked={osTags.includes(os)}
                               onChange={() => handleOSToggle(os)}
-                              className="w-5 h-5 accent-indigo-500"
+                              className="w-5 h-5 accent-cyan-500"
                             />
                             <span className={`ml-3 font-medium ${osTags.includes(os) ? "text-white" : "text-gray-400"}`}>{os}</span>
                           </label>
@@ -437,7 +444,7 @@ const NewProduct = () => {
 
                 <div className="grid gap-8">
                   <div className="bg-[#05050A] p-6 rounded-2xl border border-white/10">
-                    <h3 className="text-lg font-semibold mb-6 text-indigo-300 flex items-center gap-2">
+                    <h3 className="text-lg font-semibold mb-6 text-cyan-300 flex items-center gap-2">
                       <Monitor size={20} /> Installer Packages
                     </h3>
 
@@ -451,7 +458,7 @@ const NewProduct = () => {
                           <div key={os} className="bg-[#1e1e1e]/50 p-5 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
                             <div className="flex justify-between items-start mb-3">
                               <span className="text-white font-bold text-sm bg-white/10 px-2 py-1 rounded">{os}</span>
-                              <label className="cursor-pointer bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 rounded-lg text-xs font-bold text-white transition-colors shadow-lg shadow-indigo-500/20">
+                              <label className="cursor-pointer bg-cyan-600 hover:bg-cyan-500 px-4 py-1.5 rounded-lg text-xs font-bold text-black transition-colors shadow-lg shadow-cyan-500/20">
                                 Select File
                                 <input
                                   type="file"
@@ -480,7 +487,8 @@ const NewProduct = () => {
                                   <span>{uploadProgress[os]}%</span>
                                 </div>
                                 <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden">
-                                  <div className="bg-indigo-500 h-full transition-all duration-300" style={{ width: `${uploadProgress[os]}%` }} />
+                                  {/* UPDATED: Progress bar Cyan */}
+                                  <div className="bg-cyan-500 h-full transition-all duration-300" style={{ width: `${uploadProgress[os]}%` }} />
                                 </div>
                               </div>
                             )}
@@ -497,7 +505,7 @@ const NewProduct = () => {
 
                   <div className="bg-[#05050A] p-6 rounded-2xl border border-white/10">
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-lg font-semibold text-indigo-300 flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-cyan-300 flex items-center gap-2">
                         <ImageIcon size={20} /> Cover Image
                       </h3>
                       {!previewUrl && !existingImageUrl && (
@@ -529,9 +537,10 @@ const NewProduct = () => {
                         )}
                       </div>
                     ) : (
-                      <label className="w-full max-w-lg aspect-video border-2 border-dashed border-white/10 hover:border-indigo-500/50 bg-[#1e1e1e]/30 hover:bg-[#1e1e1e]/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all group">
+                      <label className="w-full max-w-lg aspect-video border-2 border-dashed border-white/10 hover:border-cyan-500/50 bg-[#1e1e1e]/30 hover:bg-[#1e1e1e]/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all group">
                         <div className="p-4 bg-white/5 rounded-full mb-3 group-hover:scale-110 transition-transform">
-                            <ImageIcon size={32} className="text-gray-500 group-hover:text-indigo-400" />
+                            {/* UPDATED: Hover text color */}
+                            <ImageIcon size={32} className="text-gray-500 group-hover:text-cyan-400" />
                         </div>
                         <span className="text-gray-400 font-medium group-hover:text-white">Click to upload cover image</span>
                         <span className="text-xs text-gray-600 mt-1">16:9 ratio recommended</span>
@@ -563,7 +572,8 @@ const NewProduct = () => {
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">Type</p>
-                        <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-sm text-indigo-300 font-medium">{applicationType}</span>
+                        {/* UPDATED: Badge color */}
+                        <span className="inline-block px-3 py-1 bg-white/5 border border-white/10 rounded-lg text-sm text-cyan-300 font-medium">{applicationType}</span>
                       </div>
                       <div>
                         <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">OS Support</p>
@@ -621,13 +631,15 @@ const NewProduct = () => {
                 ) : <div></div>}
 
                 {currentStep < 3 ? (
-                  <button onClick={handleNext} className="flex items-center px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95">
+                  // UPDATED: Button Cyan
+                  <button onClick={handleNext} className="flex items-center px-8 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95">
                     Next Step <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
                 ) : (
                   <>
                     {isSuccess ? (
-                      <Link to="/product" className="flex items-center px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105 active:scale-95">
+                      // UPDATED: Button Cyan
+                      <Link to="/product" className="flex items-center px-8 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-black font-bold shadow-lg shadow-cyan-500/20 transition-all hover:scale-105 active:scale-95">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Marketplace
                       </Link>
                     ) : (

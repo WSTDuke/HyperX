@@ -50,7 +50,8 @@ const PostDetail = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#05050A] flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+                {/* UPDATED: Cyan Spinner */}
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
             </div>
         );
     }
@@ -59,7 +60,7 @@ const PostDetail = () => {
         return (
             <div className="min-h-screen bg-[#05050A] flex flex-col items-center justify-center text-gray-400 gap-4">
                 <h2 className="text-xl font-semibold">Post not found</h2>
-                <button onClick={() => navigate('/community')} className="text-indigo-400 hover:underline">
+                <button onClick={() => navigate('/community')} className="text-cyan-400 hover:underline">
                     Back to Community
                 </button>
             </div>
@@ -67,17 +68,18 @@ const PostDetail = () => {
     }
 
     return (
-        // BACKGROUND MATCHING COMMUNITY PAGE
+        // BACKGROUND MATCHING NEW THEME
         <div className="min-h-screen bg-[#05050A] text-gray-300 pt-24 px-4 pb-10 relative isolate overflow-hidden">
              
-             {/* Background Effects */}
+             {/* Background Effects (Cyan/Blue) */}
              <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-             <div className="fixed top-20 left-1/2 -translate-x-1/2 -z-10 w-[50rem] h-[50rem] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none"></div>
+             <div className="fixed top-20 left-1/2 -translate-x-1/2 -z-10 w-[50rem] h-[50rem] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+             <div className="fixed bottom-0 right-0 -z-10 w-[40rem] h-[40rem] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            <div className="max-w-2xl mx-auto relative z-10">
+            <div className="max-w-3xl mx-auto relative z-10">
                 <button 
                     onClick={() => navigate(-1)} 
-                    className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors group"
+                    className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors group px-4 py-2 rounded-lg hover:bg-white/5 w-fit"
                 >
                     <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back
                 </button>

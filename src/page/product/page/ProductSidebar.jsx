@@ -9,16 +9,16 @@ const ProductSidebar = ({ sortList, sortOption, tagListApplication, selectedTags
             className={`
                 group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 select-none border
                 ${active 
-                    ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]" 
+                    ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.15)]" // UPDATED: Cyan styles
                     : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white hover:border-white/5"}
             `}
         >
             <div className="flex items-center gap-3">
                 <div className={`
                     w-4 h-4 rounded-${radio ? 'full' : 'md'} border flex items-center justify-center transition-colors
-                    ${active ? "bg-indigo-500 border-indigo-500" : "border-gray-600 group-hover:border-gray-400"}
+                    ${active ? "bg-cyan-500 border-cyan-500" : "border-gray-600 group-hover:border-gray-400"} 
                 `}>
-                    {active && <div className={`w-1.5 h-1.5 bg-white ${radio ? 'rounded-full' : 'rounded-sm'}`} />}
+                    {active && <div className={`w-1.5 h-1.5 bg-black ${radio ? 'rounded-full' : 'rounded-sm'}`} />} 
                 </div>
                 <span className="text-sm font-medium">{label}</span>
             </div>
@@ -26,12 +26,12 @@ const ProductSidebar = ({ sortList, sortOption, tagListApplication, selectedTags
     );
 
     return (
-        // UPDATE: Thêm bg-gradient-to-b để tạo độ chuyển nhẹ từ trên xuống
         <aside className="w-72 h-full border-r border-white/5 bg-gradient-to-b from-[#0B0D14]/80 to-[#05050A]/80 backdrop-blur-xl hidden lg:flex flex-col flex-shrink-0">
             
             <div className="p-6 border-b border-white/5">
                 <div className="flex items-center gap-2 text-white">
-                    <Filter size={20} className="text-indigo-400" />
+                    {/* UPDATED: Icon color */}
+                    <Filter size={20} className="text-cyan-400" />
                     <h2 className="font-bold text-lg">Filters & Sort</h2>
                 </div>
             </div>

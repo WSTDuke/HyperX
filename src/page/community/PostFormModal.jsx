@@ -36,9 +36,10 @@ const PostFormModal = ({ show, onClose, onSubmit, form, setForm, loading, curren
                 {!currentUser ? (
                     <div className="text-center py-8">
                         <p className="text-gray-400 mb-4">You need to be logged in to post.</p>
+                        {/* UPDATED: Button Color */}
                         <Link 
                             to="/signin" 
-                            className="inline-block px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+                            className="inline-block px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-black font-bold rounded-xl transition-colors shadow-lg shadow-cyan-500/20"
                         >
                             Log in now
                         </Link>
@@ -52,7 +53,8 @@ const PostFormModal = ({ show, onClose, onSubmit, form, setForm, loading, curren
                                 placeholder="Post Title..."
                                 value={form.title}
                                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                className="w-full p-3.5 rounded-xl bg-[#05050A] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
+                                // UPDATED: Focus Color
+                                className="w-full p-3.5 rounded-xl bg-[#05050A] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all font-medium"
                                 autoFocus
                             />
                         </div>
@@ -64,7 +66,8 @@ const PostFormModal = ({ show, onClose, onSubmit, form, setForm, loading, curren
                                 value={form.content}
                                 onChange={(e) => setForm({ ...form, content: e.target.value })}
                                 rows={8}
-                                className="w-full p-3.5 rounded-xl bg-[#05050A] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all resize-none leading-relaxed custom-scrollbar"
+                                // UPDATED: Focus Color
+                                className="w-full p-3.5 rounded-xl bg-[#05050A] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all resize-none leading-relaxed custom-scrollbar"
                             ></textarea>
                         </div>
 
@@ -76,10 +79,11 @@ const PostFormModal = ({ show, onClose, onSubmit, form, setForm, loading, curren
                             >
                                 Cancel
                             </button>
+                            {/* UPDATED: Submit Button Color (Cyan) */}
                             <button 
                                 onClick={onSubmit} 
                                 disabled={loading || !form.title.trim() || !form.content.trim()} 
-                                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0"
+                                className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-black font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none hover:-translate-y-0.5 active:translate-y-0"
                             >
                                 {buttonText}
                             </button>

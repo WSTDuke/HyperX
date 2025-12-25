@@ -17,7 +17,7 @@ const ProductDetail = () => {
     const navigate = useNavigate();
 
     const scrollRef = useRef(null);
-    const relatedListRef = useRef(null); // Ref cho danh sách liên quan
+    const relatedListRef = useRef(null);
     const menuRef = useRef(null);
 
     const [product, setProduct] = useState(null);
@@ -39,10 +39,9 @@ const ProductDetail = () => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     };
 
-    // Hàm cuộn danh sách
     const scroll = (direction) => {
         if (!relatedListRef.current) return;
-        const offset = 320; // Khoảng cách cuộn (tương đương chiều rộng card + gap)
+        const offset = 320;
         relatedListRef.current.scrollBy({
             left: direction === "left" ? -offset : offset,
             behavior: "smooth"
@@ -109,11 +108,10 @@ const ProductDetail = () => {
             const { data: userData } = await supabase.auth.getUser();
             if (userData?.user) setCurrentUser(userData.user);
 
-            // Fetch related products (Limit 5)
             let query = supabase.from("products")
                 .select("*")
                 .neq("id", id)
-                .limit(5) // --- GIỚI HẠN 5 SẢN PHẨM ---
+                .limit(5)
                 .order("created_at", { ascending: false });
                 
             if (productData.tag?.[0]) {
@@ -133,7 +131,8 @@ const ProductDetail = () => {
 
     if (isLoading) return (
         <main className="min-h-screen bg-[#05050A] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+            {/* UPDATED: Cyan spinner */}
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
         </main>
     );
 
@@ -143,7 +142,8 @@ const ProductDetail = () => {
                 <Package size={48} className="opacity-50" />
             </div>
             <h2 className="text-xl font-bold text-white">Product not found</h2>
-            <button onClick={() => navigate("/product")} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all">
+            {/* UPDATED: Cyan Button */}
+            <button onClick={() => navigate("/product")} className="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 text-black font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(8,145,178,0.4)]">
                 Back to Marketplace
             </button>
         </main>
@@ -163,10 +163,10 @@ const ProductDetail = () => {
     return (
         <main ref={scrollRef} className="bg-[#05050A] min-h-screen pt-20 pb-12 relative isolate overflow-hidden">
             
-            {/* Background Effects */}
+            {/* UPDATED: Background Effects to Cyan/Blue */}
             <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-            <div className="fixed top-0 right-0 -z-10 w-[40rem] h-[40rem] bg-indigo-900/10 rounded-full blur-[120px] pointer-events-none"></div>
-            <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-purple-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="fixed top-0 right-0 -z-10 w-[40rem] h-[40rem] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
             <div className="p-4 md:px-8 max-w-7xl mx-auto relative z-10">
 
@@ -221,9 +221,10 @@ const ProductDetail = () => {
                             </div>
                         </div>
 
+                        {/* UPDATED: Download Button with Cyan/Blue Gradient */}
                         <button
                             onClick={() => setShowModal(true)}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 p-4 rounded-xl text-white font-bold text-lg shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
+                            className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 p-4 text-white font-bold text-lg shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2"
                         >
                             <Download size={20} />
                             Download Now 
@@ -238,7 +239,7 @@ const ProductDetail = () => {
                         <div>
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {availableOS.map(os => (
-                                    <span key={os} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium flex items-center gap-1.5">
+                                    <span key={os} className="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-gray-400 text-xs font-medium flex items-center gap-1.5 hover:text-cyan-400 hover:border-cyan-500/30 transition-colors">
                                         <Monitor size={12} /> {os}
                                     </span>
                                 ))}
@@ -261,7 +262,7 @@ const ProductDetail = () => {
                         {product.instructions && (
                             <div className="bg-[#0B0D14]/60 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
                                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                    <CheckCircle2 size={20} className="text-green-500" /> Installation Instructions
+                                    <CheckCircle2 size={20} className="text-cyan-500" /> Installation Instructions
                                 </h3>
                                 <div className="prose prose-invert prose-sm max-w-none text-gray-300 whitespace-pre-line font-mono bg-black/30 p-4 rounded-lg border border-white/5">
                                     {product.instructions}
@@ -274,12 +275,12 @@ const ProductDetail = () => {
                 {/* --- RELATED PRODUCTS (SLIDER) --- */}
                 {relatedProducts.length > 0 && (
                     <div className="border-t border-white/10 pt-10">
-                        {/* Header: Title + Navigation */}
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                             <h2 className="text-2xl font-bold text-white">Related Products</h2>
                             
                             <div className="flex items-center gap-4">
-                                <Link to="/product" className="text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
+                                {/* UPDATED: View All Color */}
+                                <Link to="/product" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors">
                                     View All
                                 </Link>
                                 <div className="flex gap-2">
@@ -302,21 +303,27 @@ const ProductDetail = () => {
                                 <Link 
                                     to={`/product/${item.id}`} 
                                     key={item.id} 
-                                    className="min-w-[280px] md:min-w-[320px] snap-start group block bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-all duration-300 hover:-translate-y-1"
+                                    className="min-w-[280px] md:min-w-[320px] snap-start group block bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-all duration-300 hover:-translate-y-1 relative"
                                 >
-                                    <div className="aspect-video bg-gray-900 overflow-hidden relative">
-                                        {item.image_url ? (
-                                            <img src={item.image_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-gray-700"><Package size={24} /></div>
-                                        )}
-                                        <div className="absolute top-2 right-2 bg-black/60 px-2.5 py-1 rounded-lg text-xs font-bold text-green-400 border border-white/10 backdrop-blur-sm">
-                                            {formatCurrency(item.price)}
+                                    {/* UPDATED: Glow Effect */}
+                                    <div className="absolute -inset-0.5 bg-gradient-to-b from-cyan-500 to-blue-600 rounded-2xl opacity-0 group-hover:opacity-30 blur transition duration-500"></div>
+                                    
+                                    <div className="relative h-full bg-[#0B0D14] rounded-2xl overflow-hidden flex flex-col">
+                                        <div className="aspect-video bg-gray-900 overflow-hidden relative">
+                                            {item.image_url ? (
+                                                <img src={item.image_url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt={item.name} />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-700"><Package size={24} /></div>
+                                            )}
+                                            <div className="absolute top-2 right-2 bg-black/60 px-2.5 py-1 rounded-lg text-xs font-bold text-cyan-400 border border-white/10 backdrop-blur-sm">
+                                                {formatCurrency(item.price)}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="p-5">
-                                        <h3 className="font-bold text-white truncate group-hover:text-indigo-400 transition-colors text-lg mb-1">{item.name}</h3>
-                                        <p className="text-sm text-gray-500 truncate">{item.description}</p>
+                                        <div className="p-5">
+                                            {/* UPDATED: Title Hover Color */}
+                                            <h3 className="font-bold text-white truncate group-hover:text-cyan-400 transition-colors text-lg mb-1">{item.name}</h3>
+                                            <p className="text-sm text-gray-500 truncate">{item.description}</p>
+                                        </div>
                                     </div>
                                 </Link>
                             ))}
@@ -339,10 +346,11 @@ const ProductDetail = () => {
                                 <button
                                     key={os}
                                     onClick={() => handleDownloadAction(os)}
-                                    className="w-full px-4 py-3.5 rounded-xl bg-[#0B0D14] hover:bg-indigo-600/20 border border-white/10 hover:border-indigo-500/50 text-white flex justify-between items-center transition-all group"
+                                    // UPDATED: Hover Colors for Modal Buttons
+                                    className="w-full px-4 py-3.5 rounded-xl bg-[#0B0D14] hover:bg-cyan-600/10 border border-white/10 hover:border-cyan-500/50 text-white flex justify-between items-center transition-all group"
                                 >
                                     <span className="font-medium">{os}</span>
-                                    <Download size={18} className="text-gray-500 group-hover:text-indigo-400" />
+                                    <Download size={18} className="text-gray-500 group-hover:text-cyan-400" />
                                 </button>
                             ))}
                         </div>

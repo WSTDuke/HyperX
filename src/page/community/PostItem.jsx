@@ -1,9 +1,9 @@
 import React, { useEffect, useState, memo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import UserAvatar from "../../components/UserAvatar";
-import formatTime from "./formatTime";
-import { Edit, EditIcon, Heart, MessageCircle, MoreVertical, Send, Trash2 } from "lucide-react";
-import DeleteConfirmModal from "./DeleteConfirmModal";
+import UserAvatar from "../../components/UserAvatar"; // Đảm bảo đường dẫn đúng
+import formatTime from "./formatTime"; // Đảm bảo file này tồn tại
+import { EditIcon, Heart, MessageCircle, MoreHorizontal, Send, Trash2, Share2, CornerDownRight } from "lucide-react";
+import DeleteConfirmModal from "./DeleteConfirmModal"; // Đảm bảo đường dẫn đúng
 import { supabase } from "../../routes/supabaseClient";
 import PostFormModal from "./PostFormModal";
 
@@ -20,7 +20,7 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     const [isHighlighted, setIsHighlighted] = useState(false);
 
     const indentLevel = depth > 2 ? 2 : depth;
-    const paddingLeftValue = indentLevel * 24; // Giảm padding chút cho mobile
+    const paddingLeftValue = indentLevel * 24; 
     const childComments = allComments.filter(c => c.parent_id === comment.id);
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                 commentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 500);
             setIsHighlighted(true);
-            const timer = setTimeout(() => setIsHighlighted(false), 1000); 
+            const timer = setTimeout(() => setIsHighlighted(false), 2500); 
             return () => clearTimeout(timer);
         }
     }, [highlightId, comment.id]);
@@ -82,14 +82,14 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     };
 
     return (
-        <div className="flex flex-col" ref={commentRef}>
+        <div className="flex flex-col relative" ref={commentRef}>
             <div 
                 className={`flex gap-3 group relative p-3 rounded-xl transition-all duration-500 ease-in-out border border-transparent
-                    ${isHighlighted ? 'bg-indigo-500/10 border-indigo-500/30' : 'hover:bg-white/5'} 
+                    ${isHighlighted ? 'bg-cyan-500/10 border-cyan-500/30' : 'hover:bg-white/[0.03]'} 
                 `}
                 style={{ marginLeft: `${paddingLeftValue}px` }}
             >
-                {depth > 0 && <div className="absolute -left-3 top-0 w-3 h-4 border-l border-b border-gray-700 rounded-bl-lg"></div>}
+                {depth > 0 && <div className="absolute -left-[14px] top-4 w-3 h-px bg-white/10"></div>}
                 
                 <div className="flex-shrink-0 pt-1 relative z-10">
                     <UserAvatar user={{ id: comment.user_id, raw_user_meta_data: comment.raw_user_meta_data, email: comment.email }} size="sm" />
@@ -97,16 +97,16 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                 
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
-                        <span className="text-sm font-bold text-indigo-300">{comment.raw_user_meta_data?.full_name || "Anonymous"}</span>
+                        <span className="text-sm font-bold text-cyan-200">{comment.raw_user_meta_data?.full_name || "Anonymous"}</span>
                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-600">{formatTime(comment.created_at)}</span>
+                            <span className="text-[10px] text-gray-600 font-mono">{formatTime(comment.created_at)}</span>
                             {currentUser && currentUser.id === comment.user_id && (
                                 <div className="relative">
-                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-500 hover:text-white p-1 rounded transition"><MoreVertical size={14} /></button>
+                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-600 hover:text-white transition opacity-0 group-hover:opacity-100"><MoreHorizontal size={14} /></button>
                                     {showMenu && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)}></div>
-                                            <div className="absolute right-0 top-6 z-20 w-24 bg-[#1e293b] border border-gray-700 rounded-lg shadow-xl py-1">
+                                            <div className="absolute right-0 top-5 z-20 w-24 bg-[#1A1D26] border border-white/10 rounded-lg shadow-xl py-1">
                                                 <button onClick={() => onDelete(comment.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-white/5 text-left"><Trash2 size={12} /> Delete</button>
                                             </div>
                                         </>
@@ -116,11 +116,11 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                         </div>
                     </div>
                     
-                    <p className="text-sm text-gray-300 leading-relaxed break-words">{comment.content}</p>
+                    <p className="text-sm text-gray-300 leading-relaxed break-words font-light">{comment.content}</p>
                     
                     <div className="flex items-center gap-4 mt-2">
-                        <button onClick={handleLikeComment} className={`text-xs font-semibold flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-gray-300'}`}><Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes}</button>
-                        <button onClick={handleToggleReply} className="text-xs font-semibold text-gray-500 hover:text-indigo-400 flex items-center gap-1 transition-colors">Reply</button>
+                        <button onClick={handleLikeComment} className={`text-xs font-medium flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400'}`}><Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes}</button>
+                        <button onClick={handleToggleReply} className="text-xs font-medium text-gray-500 hover:text-cyan-400 flex items-center gap-1 transition-colors">Reply</button>
                     </div>
                     
                     {showReplyInput && currentUser && (
@@ -130,13 +130,13 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                                 autoFocus 
                                 value={replyContent} 
                                 onChange={(e) => setReplyContent(e.target.value)} 
-                                placeholder={`Reply...`}
-                                className="flex-1 bg-[#05050A] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500/50 transition-colors" 
+                                placeholder="Write a reply..."
+                                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500/50 transition-colors" 
                                 onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
                                 disabled={isSendingReply}
                             />
-                            <button onClick={handleSendReply} disabled={!replyContent.trim() || isSendingReply} className="p-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 disabled:opacity-50">
-                                <Send size={14} />
+                            <button onClick={handleSendReply} disabled={!replyContent.trim() || isSendingReply} className="p-2 bg-cyan-600 rounded-lg text-black hover:bg-cyan-500 disabled:opacity-50 transition-colors">
+                                <CornerDownRight size={14} />
                             </button>
                         </div>
                     )}
@@ -149,8 +149,11 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     );
 });
 
-// --- MAIN COMPONENT ---
+// --- MAIN POST COMPONENT ---
 const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated }) => {
+    // 1. FIX: Kiểm tra an toàn, nếu không có post thì không render gì cả
+    if (!initialPost) return null;
+
     const [postData, setPostData] = useState(initialPost); 
     const [likes, setLikes] = useState(initialPost.like_count || 0); 
     const [isLiked, setIsLiked] = useState(false);
@@ -161,7 +164,6 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
     const [loadingComments, setLoadingComments] = useState(false);
     const [isSendingComment, setIsSendingComment] = useState(false);
 
-    // Modal & Menu States
     const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [showPostMenu, setShowPostMenu] = useState(false);
@@ -306,47 +308,49 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
     const rootComments = comments.filter(c => !c.parent_id);
 
     return (
-        // CARD STYLE MỚI: Glassmorphism trên nền đen
-        <div className="bg-[#0B0D14] border border-white/10 p-6 rounded-2xl shadow-lg hover:border-indigo-500/30 transition-all duration-300">
+        <div className="bg-[#0B0D14] border border-white/10 p-6 md:p-8 rounded-3xl shadow-lg hover:border-cyan-500/20 hover:shadow-[0_0_30px_-10px_rgba(6,182,212,0.1)] transition-all duration-300 relative group overflow-hidden">
+            
             {/* Header Post */}
-            <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 mt-1"><UserAvatar user={{ id: postData.user_id, raw_user_meta_data: postData.raw_user_meta_data, email: postData.email }} size="md" /></div>
+            <div className="flex items-start gap-4 z-10 relative">
+                <div className="flex-shrink-0 mt-1">
+                    <UserAvatar user={{ id: postData.user_id, raw_user_meta_data: postData.raw_user_meta_data, email: postData.email }} size="md" />
+                </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                         <div className="flex-1 min-w-0">
-                            <h3 className="text-xl font-bold text-white mb-1 leading-tight hover:text-indigo-400 transition-colors break-words">
+                            <h3 className="text-xl md:text-2xl font-bold text-white mb-1 leading-snug hover:text-cyan-400 transition-colors break-words">
                                 <Link to={`/community/post/${postData.id}`}>{postData.title}</Link>
                             </h3>
                             <div className="flex items-center gap-2 text-gray-500 text-xs">
-                                <span className="text-indigo-300 font-medium">{postData.raw_user_meta_data?.full_name || 'Anonymous'}</span>
-                                <span>•</span>
-                                <span>{formatTime(postData.created_at)}</span>
+                                <span className="text-cyan-300 font-medium hover:underline cursor-pointer">{postData.raw_user_meta_data?.full_name || 'Anonymous'}</span>
+                                <span className="w-1 h-1 rounded-full bg-gray-600"></span>
+                                <span className="font-mono">{formatTime(postData.created_at)}</span>
                                 {postData.updated_at && postData.updated_at !== postData.created_at && (
-                                    <span> • Edited</span>
+                                    <span className="italic opacity-60 ml-1">(edited)</span>
                                 )}
                             </div>
                         </div>
                         {currentUser && currentUser.id === postData.user_id && (
                             <div className="relative ml-2">
-                                <button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-500 hover:text-white p-2 rounded-lg hover:bg-white/10 transition">
-                                    <MoreVertical size={20} />
+                                <button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/10 transition">
+                                    <MoreHorizontal size={20} />
                                 </button>
                                 {showPostMenu && (
                                     <>
                                         <div className="fixed inset-0 z-10" onClick={() => setShowPostMenu(false)}></div>
-                                        <div className="absolute right-0 top-10 z-20 w-32 bg-[#1e293b] border border-gray-700 rounded-lg shadow-2xl py-1">
+                                        <div className="absolute right-0 top-10 z-20 w-40 bg-[#1A1D26] border border-white/10 rounded-xl shadow-2xl py-1 animate-in fade-in zoom-in duration-100">
                                             <button 
                                                 onClick={() => {
                                                     setEditForm({ title: postData.title, content: postData.content });
                                                     setIsEditing(true); 
                                                     setShowPostMenu(false); 
                                                 }} 
-                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-indigo-400 hover:bg-white/5 text-left">
-                                                <span className="h-4 w-4"><EditIcon size={14} /></span> Edit Post
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-cyan-400 hover:bg-white/5 text-left font-medium">
+                                                <EditIcon size={14} /> Edit Post
                                             </button>
                                             <button 
                                                 onClick={() => setDeletePostModalOpen(true)} 
-                                                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-white/5 text-left">
+                                                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 text-left font-medium">
                                                 <Trash2 size={14} /> Delete Post
                                             </button>
                                         </div>
@@ -355,47 +359,64 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                             </div>
                         )}
                     </div>
-                    <p className="text-gray-300 mt-3 whitespace-pre-line leading-relaxed break-words">{postData.content}</p>
+                    <p className="text-gray-300 mt-4 whitespace-pre-line leading-relaxed break-words font-light text-base md:text-lg">{postData.content}</p>
                 </div>
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center gap-4 mt-5 pl-[3.5rem]">
-                <button onClick={handleLike} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${isLiked ? "text-red-500 bg-red-500/10" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}><Heart size={18} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span></button>
-                <button onClick={toggleComments} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${showComments ? "text-indigo-400 bg-indigo-500/10" : "text-gray-400 hover:bg-white/5 hover:text-white"}`}><MessageCircle size={18} /><span>{commentCount}</span></button>
+            <div className="flex items-center justify-between mt-6 pl-[3.5rem] relative z-10">
+                <div className="flex items-center gap-2">
+                    <button onClick={handleLike} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${isLiked ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}>
+                        <Heart size={18} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span>
+                    </button>
+                    <button onClick={toggleComments} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${showComments ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}>
+                        <MessageCircle size={18} /><span>{commentCount}</span>
+                    </button>
+                </div>
+                <button className="p-2 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
+                    <Share2 size={18} />
+                </button>
             </div>
 
             {/* Comment Section */}
             {showComments && (
-                <div className="mt-5 bg-[#05050A] rounded-xl p-4 ml-0 sm:ml-[3.5rem] border border-white/5">
+                <div className="mt-6 bg-black/20 rounded-2xl p-5 ml-0 sm:ml-[3.5rem] border border-white/5 relative z-10">
                     {currentUser ? (
-                        <div className="flex gap-3 items-start mb-5">
+                        <div className="flex gap-3 items-start mb-6">
                             <UserAvatar user={{ ...currentUser, id: currentUser.id }} size="sm" />
-                            <div className="flex-1 relative">
+                            <div className="flex-1 relative group-focus-within:ring-1 ring-cyan-500/50 rounded-xl transition-all">
                                 <input 
                                     type="text" 
                                     value={newComment} 
                                     onChange={(e) => setNewComment(e.target.value)} 
-                                    placeholder="Write a comment..." 
-                                    className="w-full bg-[#0B0D14] border border-white/10 rounded-xl pl-4 pr-12 py-3 text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:bg-[#0B0D14] transition-all" 
+                                    placeholder="Write a thoughtful comment..." 
+                                    className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 focus:bg-[#0B0D14] transition-all placeholder-gray-600" 
                                     onKeyDown={(e) => e.key === 'Enter' && handleSendComment()} 
                                     disabled={isSendingComment}
                                 />
                                 <button 
                                     onClick={handleSendComment} 
                                     disabled={!newComment.trim() || isSendingComment} 
-                                    className="absolute right-2 top-2 p-1.5 bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 transition-colors"
+                                    className="absolute right-2 top-2 p-1.5 bg-cyan-600 rounded-lg text-black hover:bg-cyan-500 disabled:opacity-50 disabled:hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20"
                                 >
                                     <Send size={16} />
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-500 text-center mb-4"><Link to="/signin" className="text-indigo-400 hover:underline">Log in</Link> to join the discussion.</p>
+                        <div className="p-4 bg-white/5 rounded-xl text-center mb-6 border border-dashed border-white/10">
+                            <p className="text-sm text-gray-400">
+                                Want to discuss? <Link to="/signin" className="text-cyan-400 font-bold hover:underline">Log in</Link> to join.
+                            </p>
+                        </div>
                     )}
 
-                    <div className="space-y-1 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
-                        {loadingComments ? <p className="text-sm text-gray-500 italic text-center py-4">Loading comments...</p> : rootComments.length === 0 ? <p className="text-sm text-gray-500 italic text-center py-4">No comments yet. Be the first!</p> : (
+                    <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
+                        {loadingComments ? (
+                            <div className="flex justify-center py-6"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>
+                        ) : rootComments.length === 0 ? (
+                            <p className="text-sm text-gray-500 italic text-center py-6">No comments yet. Start the conversation!</p>
+                        ) : (
                             rootComments.map((cmt) => (
                                 <CommentItem key={cmt.id} comment={cmt} allComments={comments} currentUser={currentUser} onDelete={requestDeleteComment} onReplySuccess={handleReplySuccess} depth={0} highlightId={highlightCommentId} />
                             ))
@@ -411,13 +432,14 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
     );
 };
 
+// 2. FIX: Sử dụng optional chaining để tránh lỗi so sánh undefined
 export default memo(PostItem, (prev, next) => {
     return (
-        prev.post.id === next.post.id &&
-        prev.post.like_count === next.post.like_count &&
-        prev.post.comment_count === next.post.comment_count &&
+        prev.post?.id === next.post?.id &&
+        prev.post?.like_count === next.post?.like_count &&
+        prev.post?.comment_count === next.post?.comment_count &&
         prev.currentUser?.id === next.currentUser?.id &&
-        prev.post.title === next.post.title && 
-        prev.post.content === next.post.content 
+        prev.post?.title === next.post?.title && 
+        prev.post?.content === next.post?.content 
     );
 });

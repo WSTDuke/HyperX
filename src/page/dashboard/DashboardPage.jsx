@@ -163,7 +163,7 @@ const Dashboard = () => {
     // Helper Helpers
     const getNotiIcon = (type) => {
         switch (type) {
-            case 'like_post': return <HeartIcon className="w-3.5 h-3.5 text-pink-500" />;
+            case 'like_post': return <HeartIcon className="w-3.5 h-3.5 text-red-500" />;
             case 'comment': return <ChatBubbleLeftIcon className="w-3.5 h-3.5 text-blue-500" />;
             case 'follow': return <UserPlusIcon className="w-3.5 h-3.5 text-green-500" />;
             case 'mention': return <AtSymbolIcon className="w-3.5 h-3.5 text-orange-500" />; 
