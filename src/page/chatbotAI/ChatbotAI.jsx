@@ -1,28 +1,27 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
-  Send, Loader2, Bot, ClipboardCopy, Check, Image as ImageIcon,
-  StopCircle, X, CirclePause, Pause, Copy, PlusCircle, CircleCheck, Sparkles
+  Loader2, Bot, Copy, CircleCheck, Sparkles, User
 } from "lucide-react";
 import { supabase } from '../../routes/supabaseClient';
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism"; // Giữ nguyên theme code tối
-import UserAvatar from '../../components/UserAvatar.jsx';
-import ChatInput from './ChatInput.jsx';
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import UserAvatar from '../../components/UserAvatar';
+import ChatInput from './ChatInput';
 
-// --- CONFIG --- (Giữ nguyên)
+// --- CONFIG ---
 const getApiKey = () => import.meta.env.VITE_GEMINI_API_KEY || "";
 const apiKey = getApiKey();
-const modelName = "gemini-2.5-flash";
+const modelName = "gemini-2.5-flash"; // Hoặc model mới nhất bạn có
 const apiUrlBase = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent`;
 const apiUrl = `${apiUrlBase}${apiKey ? `?key=${apiKey}` : ""}`;
-const MAX_HISTORY_TURNS = 5;
+const MAX_HISTORY_TURNS = 10;
 const initialMessages = [];
-const systemInstruction = "You are HyperX, a helpful and knowledgeable AI assistant. Answer in Vietnamese.";
+const systemInstruction = "You are HyperX AI, a helpful, witty, and knowledgeable assistant for developers. You answer in Vietnamese unless asked otherwise. Format code blocks beautifully.";
 
-// --- HELPERS --- (Giữ nguyên)
+// --- HELPERS ---
 const convertToBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
 function splitMarkdownStable(text = "") {
   const count = (re) => (text.match(re) || []).length;
@@ -43,10 +42,10 @@ const Message = ({ msg, isLast, isTyping, currentUser }) => {
   const [isCopied, setIsCopied] = useState(false);
   const isUser = msg.role === "user";
   
-  // Style Bong bóng chat mới
+  // UPDATED: Bubble Styles for Cyan Theme
   const bubbleClasses = isUser 
-    ? "bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-900/20" 
-    : "bg-[#0B0D14] border border-white/5 text-gray-200 shadow-none"; // Bot nền tối, border mảnh
+    ? "bg-gradient-to-br from-cyan-600 to-blue-600 text-white shadow-lg shadow-cyan-500/20 border border-cyan-500/20" 
+    : "bg-[#0B0D14]/80 backdrop-blur-md border border-white/10 text-gray-200 shadow-xl";
 
   const handleCopy = () => {
     if (isUser || msg.isPlaceholder || msg.isThinking) return; 
@@ -63,38 +62,45 @@ const Message = ({ msg, isLast, isTyping, currentUser }) => {
   const canShowCopyButton = !isUser && !msg.isPlaceholder && !msg.isThinking && msg.content && typeof msg.content === 'string' && msg.content.trim() !== "";
 
   return (
-    <div className={`flex flex-col w-full mb-6 ${isUser ? "items-end" : "items-start"}`}>
-      <div className={`flex items-start gap-3 max-w-[90%] md:max-w-[80%] ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+    <div className={`flex flex-col w-full mb-8 ${isUser ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+      <div className={`flex items-start gap-4 max-w-[90%] md:max-w-[85%] lg:max-w-[75%] ${isUser ? "flex-row-reverse" : "flex-row"}`}>
         
         {/* Avatar */}
         <div className="flex-shrink-0 mt-1">
           {isUser ? (
             <UserAvatar user={currentUser} size="sm" />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
-              <Sparkles size={16} />
+            // UPDATED: Bot Icon Cyan
+            <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
+              <Bot size={18} />
             </div>
           )}
         </div>
 
         {/* Content */}
-        <div className="flex flex-col gap-2 min-w-0">
-            {/* Image Preview inside User Bubble */}
+        <div className={`flex flex-col gap-2 min-w-0 ${isUser ? "items-end" : "items-start"}`}>
+            
+            {/* User Info / Bot Name */}
+            <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500 px-1">
+                {isUser ? "You" : "HyperX AI"}
+            </span>
+
+            {/* Image Preview */}
             {isUser && msg.imageUrl && (
-                <div className="mb-1 self-end">
-                    <img src={msg.imageUrl} alt="uploaded" className="rounded-xl max-w-[200px] border border-white/10 shadow-lg" />
+                <div className="mb-2 overflow-hidden rounded-2xl border border-white/10 shadow-lg">
+                    <img src={msg.imageUrl} alt="uploaded" className="max-w-[200px] max-h-[200px] object-cover" />
                 </div>
             )}
 
-            <div className={`px-5 py-3.5 rounded-2xl ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"} ${bubbleClasses} text-sm md:text-base leading-relaxed`}>
+            <div className={`px-5 py-4 rounded-2xl ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"} ${bubbleClasses} text-sm md:text-base leading-relaxed relative group`}>
             {isUser ? (
                 <p className="whitespace-pre-wrap font-sans">{msg.content}</p>
             ) : (
                 <>
                 {isAssistantThinking ? (
-                    <div className="flex items-center gap-2 text-indigo-300">
-                        <Loader2 size={16} className="animate-spin" />
-                        <span className="text-xs font-medium uppercase tracking-wider animate-pulse">Analyzing...</span>
+                    <div className="flex items-center gap-3 text-cyan-400">
+                        <Loader2 size={18} className="animate-spin" />
+                        <span className="text-xs font-bold uppercase tracking-widest animate-pulse">Processing...</span>
                     </div>
                 ) : (
                     <div className="markdown-content">
@@ -109,35 +115,41 @@ const Message = ({ msg, isLast, isTyping, currentUser }) => {
                                     remarkPlugins={[remarkGfm]}
                                     rehypePlugins={[rehypeRaw]}
                                     components={{
-                                        p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                        p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
                                         code({ inline, className, children, ...props }) {
                                             const match = /language-(\w+)/.exec(className || "");
                                             return !inline ? (
-                                                <div className="my-3 rounded-lg overflow-hidden border border-white/10 shadow-lg">
-                                                    <div className="bg-[#1e1e1e] px-3 py-1.5 flex justify-between items-center border-b border-white/5">
-                                                        <span className="text-xs text-gray-400 font-mono">{match?.[1] || 'code'}</span>
+                                                <div className="my-4 rounded-xl overflow-hidden border border-white/10 shadow-lg bg-[#0d1117]">
+                                                    <div className="bg-[#161b22] px-4 py-2 flex justify-between items-center border-b border-white/5">
+                                                        <span className="text-xs text-cyan-400 font-mono font-bold lowercase">{match?.[1] || 'code'}</span>
+                                                        <div className="flex gap-1.5">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/20"></div>
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20"></div>
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500/20"></div>
+                                                        </div>
                                                     </div>
-                                                    <SyntaxHighlighter language={match?.[1]} style={oneDark} PreTag="div" customStyle={{margin:0, borderRadius:0, background:'#1e1e1e'}} {...props}>
+                                                    <SyntaxHighlighter language={match?.[1]} style={oneDark} PreTag="div" customStyle={{margin:0, borderRadius:0, background:'transparent', fontSize: '0.85rem'}} {...props}>
                                                         {String(children).replace(/\n$/, "")}
                                                     </SyntaxHighlighter>
                                                 </div>
                                             ) : (
-                                                <code className="bg-white/10 px-1.5 py-0.5 rounded text-indigo-200 font-mono text-xs" {...props}>{children}</code>
+                                                <code className="bg-cyan-900/20 px-1.5 py-0.5 rounded text-cyan-300 font-mono text-xs border border-cyan-500/20" {...props}>{children}</code>
                                             );
                                         },
-                                        img: ({ src, alt }) => <img src={src} alt={alt} className="max-w-full rounded-lg my-2 border border-white/10" />,
-                                        ul: ({ children }) => <ul className="list-disc pl-5 mb-2 space-y-1">{children}</ul>,
-                                        ol: ({ children }) => <ol className="list-decimal pl-5 mb-2 space-y-1">{children}</ol>,
-                                        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">{children}</a>,
-                                        h1: ({children}) => <h1 className="text-xl font-bold mt-4 mb-2 text-white">{children}</h1>,
-                                        h2: ({children}) => <h2 className="text-lg font-bold mt-3 mb-2 text-white">{children}</h2>,
-                                        h3: ({children}) => <h3 className="text-base font-bold mt-2 mb-1 text-white">{children}</h3>,
+                                        img: ({ src, alt }) => <img src={src} alt={alt} className="max-w-full rounded-xl my-3 border border-white/10 shadow-md" />,
+                                        ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1 marker:text-cyan-500">{children}</ul>,
+                                        ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1 marker:text-cyan-500">{children}</ol>,
+                                        a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 decoration-cyan-500/30 hover:decoration-cyan-500 transition-all">{children}</a>,
+                                        h1: ({children}) => <h1 className="text-2xl font-bold mt-6 mb-3 text-white border-b border-white/10 pb-2">{children}</h1>,
+                                        h2: ({children}) => <h2 className="text-xl font-bold mt-5 mb-2 text-white">{children}</h2>,
+                                        h3: ({children}) => <h3 className="text-lg font-bold mt-4 mb-2 text-cyan-100">{children}</h3>,
+                                        blockquote: ({children}) => <blockquote className="border-l-4 border-cyan-500/50 pl-4 py-1 my-4 bg-cyan-900/10 italic rounded-r-lg text-gray-400">{children}</blockquote>,
                                     }}
                                     >
                                     {stable}
                                     </ReactMarkdown>
                                 )}
-                                {unstable && <span className="text-gray-300">{unstable}</span>}
+                                {unstable && <span className="text-cyan-200 animate-pulse">{unstable}</span>}
                                 </>
                             );
                         })()}
@@ -145,17 +157,17 @@ const Message = ({ msg, isLast, isTyping, currentUser }) => {
                 )}
                 </>
             )}
-            </div>
-
-            {/* Copy Button for Bot */}
+            
+            {/* Copy Button */}
             {canShowCopyButton && (
-                <div className="flex items-center gap-2 mt-1 ml-1">
-                    <button onClick={handleCopy} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-400 transition-colors px-2 py-1 rounded hover:bg-white/5">
-                        {isCopied ? <CircleCheck size={14} /> : <Copy size={14} />}
+                <div className="absolute -bottom-6 left-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <button onClick={handleCopy} className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-cyan-400 transition-colors px-2 py-1 rounded-md hover:bg-white/5">
+                        {isCopied ? <CircleCheck size={12} className="text-green-400" /> : <Copy size={12} />}
                         {isCopied ? "Copied" : "Copy"}
                     </button>
                 </div>
             )}
+            </div>
         </div>
       </div>
     </div>
@@ -203,17 +215,17 @@ export default function ChatbotAIPage({ user }) {
     if (!isChatStarted) return;
     const el = msgContainerRef.current;
     if (!el) return;
-    const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 100; // Tăng ngưỡng tự scroll
+    const isBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 200;
     if (isBottom) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, isChatStarted]);
 
-  // Drag & Drop logic (Giữ nguyên)
+  // Drag & Drop logic
   useEffect(() => {
     const dropArea = dropRef.current;
     if (!dropArea) return;
     const preventDefaults = (e) => { e.preventDefault(); e.stopPropagation(); };
-    const highlight = () => dropArea.classList.add("border-indigo-500", "bg-indigo-500/10");
-    const unhighlight = () => dropArea.classList.remove("border-indigo-500", "bg-indigo-500/10");
+    const highlight = () => dropArea.classList.add("border-cyan-500", "bg-cyan-500/5");
+    const unhighlight = () => dropArea.classList.remove("border-cyan-500", "bg-cyan-500/5");
     const handleDrop = (e) => {
       preventDefaults(e); if (isTypingRef.current) return;
       const file = e.dataTransfer.files?.[0]; if (file) handleFileSelect(file);
@@ -243,7 +255,6 @@ export default function ChatbotAIPage({ user }) {
   }, [abortCtrl]);
 
   const callGeminiApi = useCallback(async (userPrompt, chatHistory = [], imageFile = null, onChunk = null) => {
-    // Logic gọi API giữ nguyên
     setAlert(null);
     if (!apiKey) { setAlert({ text: "Missing API Key", type: "error" }); return { responseText: "API Key Error", sources: [] }; }
     const userContentParts = [{ text: userPrompt }];
@@ -262,9 +273,9 @@ export default function ChatbotAIPage({ user }) {
       const candidate = result.candidates?.[0] || null;
       if (candidate) { accumulated = candidate.content?.parts?.[0]?.text || ""; }
       if (onChunk && accumulated) {
-        const revealSpeed = 15; let i = 0;
+        const revealSpeed = 10; let i = 0; // Faster reveal
         await new Promise((resolve) => {
-          simIntervalRef.current = setInterval(() => { i++; onChunk(accumulated.slice(0, i)); if (i >= accumulated.length) { clearInterval(simIntervalRef.current); simIntervalRef.current = null; resolve(); } }, revealSpeed);
+          simIntervalRef.current = setInterval(() => { i+=2; onChunk(accumulated.slice(0, i)); if (i >= accumulated.length) { clearInterval(simIntervalRef.current); simIntervalRef.current = null; resolve(); } }, revealSpeed);
         });
       }
     } catch (err) { if (err.name === "AbortError") return { responseText: accumulated, sources }; setAlert({ text: err.message, type: "error" }); return { responseText: accumulated || "Error processing request.", sources }; } finally { setAbortCtrl(null); if (simIntervalRef.current) { clearInterval(simIntervalRef.current); simIntervalRef.current = null; } }
@@ -295,18 +306,18 @@ export default function ChatbotAIPage({ user }) {
   }, [input, selectedFile, isTyping, isChatStarted, previewUrl, messages, callGeminiApi, setIsMenuOpen]);
 
   return (
-    // MAIN CONTAINER: Màu nền đen, khóa chiều cao
     <div className="bg-[#05050A] text-gray-300 font-sans h-screen w-screen overflow-hidden flex flex-col pt-16 relative isolate">
       
-      {/* Background Effects */}
+      {/* UPDATED: Background Effects to Cyan/Blue */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 -z-10 w-[50rem] h-[50rem] bg-indigo-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 -z-10 w-[60rem] h-[60rem] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="fixed bottom-0 right-0 -z-10 w-[50rem] h-[50rem] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       {isChatStarted ? (
         <div className="flex flex-col flex-1 h-full w-full max-w-5xl mx-auto relative z-10">
           
-          {/* Chat History Area (Scrollable) */}
-          <div ref={msgContainerRef} className="flex-1 overflow-y-auto px-4 md:px-0 pt-6 pb-4 custom-scrollbar scroll-smooth">
+          {/* Chat History Area */}
+          <div ref={msgContainerRef} className="flex-1 overflow-y-auto px-4 md:px-6 pt-6 pb-4 custom-scrollbar scroll-smooth">
             <div className="max-w-3xl mx-auto w-full">
                 {messages.map((msg, idx) => (
                 <Message key={msg.id} msg={msg} isLast={idx === messages.length - 1} currentUser={userProfile} isTyping={isTyping} />
@@ -315,8 +326,8 @@ export default function ChatbotAIPage({ user }) {
             </div>
           </div>
 
-          {/* Input Area (Fixed at bottom) */}
-          <div className="input-area-wrapper w-full pb-6 px-4 md:px-0">
+          {/* Input Area */}
+          <div className="input-area-wrapper w-full pb-6 px-4 md:px-6 pt-2">
             <ChatInput
               isCentered={false}
               isTyping={isTyping}
@@ -336,21 +347,22 @@ export default function ChatbotAIPage({ user }) {
           </div>
         </div>
       ) : (
-        // Welcome Screen (Centered)
+        // Welcome Screen
         <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto px-4 relative z-10">
-          <div className="text-center mb-10 space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-[0_0_40px_rgba(99,102,241,0.4)] mb-4">
-                <Bot size={40} className="text-white" />
+          <div className="text-center mb-12 space-y-6 animate-in fade-in zoom-in duration-500">
+            {/* UPDATED: Logo Container */}
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[0_0_50px_rgba(34,211,238,0.4)] mb-4 ring-1 ring-white/20">
+                <Bot size={48} className="text-white" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
-              Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">{userProfile?.full_name || "Creator"}</span>
+            <h1 className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+              Hello, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{userProfile?.full_name || "Creator"}</span>
             </h1>
-            <p className="text-lg text-gray-400 max-w-xl mx-auto">
-              I'm HyperX AI. How can I help you build something amazing today?
+            <p className="text-xl text-gray-400 max-w-xl mx-auto font-light leading-relaxed">
+              I'm HyperX AI. Ready to assist with code, creativity, and complexity.
             </p>
           </div>
           
-          <div className="w-full max-w-2xl input-area-wrapper">
+          <div className="w-full max-w-3xl input-area-wrapper">
             <ChatInput
               isCentered={true}
               isTyping={isTyping}

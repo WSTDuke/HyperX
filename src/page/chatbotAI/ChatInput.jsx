@@ -1,7 +1,7 @@
-import React, { useRef, useCallback } from "react";
-import { Send, Pause, PlusCircle, Image as ImageIcon, FileText, X } from "lucide-react";
+import React, { useRef, useCallback, useEffect } from "react";
+import { Send, Pause, Image as ImageIcon, FileText, X } from "lucide-react";
 
-// Upload menu component (Đẹp hơn, Glassmorphism)
+// Upload menu component
 const UploadMenu = React.memo(({ isMenuOpen, handleMenuOptionClick }) => {
     if (!isMenuOpen) return null;
 
@@ -11,19 +11,20 @@ const UploadMenu = React.memo(({ isMenuOpen, handleMenuOptionClick }) => {
                 onClick={() => handleMenuOptionClick("image")} 
                 className="flex items-center w-full px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors"
             >
-                <div className="p-1.5 bg-pink-500/20 rounded-lg mr-3 text-pink-400">
+                <div className="p-1.5 bg-cyan-500/20 rounded-lg mr-3 text-cyan-400">
                     <ImageIcon size={16} />
                 </div>
                 Upload Image
             </button>
             <button 
                 onClick={() => handleMenuOptionClick("file")} 
-                className="flex items-center w-full px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors"
+                className="flex items-center w-full px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors cursor-not-allowed opacity-50"
+                disabled
             >
                 <div className="p-1.5 bg-blue-500/20 rounded-lg mr-3 text-blue-400">
                     <FileText size={16} />
                 </div>
-                Upload File
+                Document (Soon)
             </button>
         </div>
     );
@@ -48,6 +49,15 @@ export const ChatInput = React.memo(({
 }) => {
     const imageInputRef = useRef(null);
     const fileInputRef = useRef(null);
+    const textareaRef = useRef(null);
+
+    // Auto-resize textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+        }
+    }, [input]);
 
     const handleCancel = useCallback(() => {
         handleCancelFile();
@@ -70,14 +80,14 @@ export const ChatInput = React.memo(({
                 
                 {/* Alert Notification */}
                 {alert && (
-                    <div className={`mb-4 p-3 text-sm rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 ${alert.type === "error" ? "bg-red-500/10 text-red-300 border border-red-500/20" : "bg-blue-500/10 text-blue-300 border border-blue-500/20"}`}>
+                    <div className={`mb-4 p-3 text-sm rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 ${alert.type === "error" ? "bg-red-500/10 text-red-300 border border-red-500/20" : "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20"}`}>
                         <span>{alert.text}</span>
                     </div>
                 )}
 
                 {/* File Preview Area */}
                 {(previewUrl || selectedFile) && (
-                    <div className="mb-4 inline-flex items-center gap-3 p-2 pr-4 bg-white/5 border border-white/10 rounded-2xl animate-in fade-in zoom-in duration-200">
+                    <div className="mb-4 inline-flex items-center gap-3 p-2 pr-4 bg-white/5 border border-white/10 rounded-2xl animate-in fade-in zoom-in duration-200 shadow-lg">
                         {previewUrl ? (
                             <img src={previewUrl} alt="preview" className="w-12 h-12 object-cover rounded-xl border border-white/10" />
                         ) : (
@@ -98,28 +108,30 @@ export const ChatInput = React.memo(({
                 {/* Main Input Box */}
                 <div
                     ref={dropRef}
+                    // STYLE: Input Container Styles (Cyan Focus)
                     className={`relative group rounded-[2rem] transition-all duration-300
                         ${isCentered 
-                            ? "bg-[#0B0D14] border border-white/10 shadow-2xl hover:border-indigo-500/30 hover:shadow-indigo-500/10 p-1.5" 
-                            : "bg-[#0B0D14] border border-white/10 p-1.5"
+                            ? "bg-[#0B0D14] border border-white/10 shadow-2xl hover:border-cyan-500/30 hover:shadow-cyan-500/10 p-2" 
+                            : "bg-[#0B0D14] border border-white/10 p-2"
                         }
+                        focus-within:border-cyan-500/50 focus-within:shadow-[0_0_30px_-5px_rgba(6,182,212,0.15)]
                     `}
                 >
-                    <form onSubmit={handleSendMessage} className="relative flex items-center gap-2">
+                    <form onSubmit={handleSendMessage} className="relative flex items-end gap-2">
 
                         {/* Menu Toggle Button */}
-                        <div className="relative flex-shrink-0">
+                        <div className="relative flex-shrink-0 pb-1 pl-1">
                             <button
                                 type="button"
                                 onClick={toggleMenu}
                                 disabled={isTyping}
-                                className={`p-3 rounded-full text-white transition-all duration-300 disabled:opacity-50
+                                className={`p-2.5 rounded-full transition-all duration-300 disabled:opacity-50
                                     ${isMenuOpen 
-                                        ? "bg-indigo-600 rotate-45 shadow-lg shadow-indigo-500/20" 
-                                        : "bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white"
+                                        ? "bg-cyan-500/20 text-cyan-400 rotate-45" 
+                                        : "bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white"
                                     }`}
                             >
-                                <PlusCircle size={22} />
+                                <PlusIcon size={20} />
                             </button>
                             <UploadMenu isMenuOpen={isMenuOpen} handleMenuOptionClick={handleMenuOptionClick} />
 
@@ -141,23 +153,30 @@ export const ChatInput = React.memo(({
                         </div>
 
                         {/* Text Input */}
-                        <input
-                            type="text"
+                        <textarea
+                            ref={textareaRef}
                             placeholder={isTyping ? "AI is thinking..." : "Ask anything..."}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage(e);
+                                }
+                            }}
                             disabled={isTyping}
-                            className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 px-2 py-3 text-base min-w-0"
+                            className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 px-2 py-3.5 text-base min-w-0 resize-none max-h-[200px] overflow-y-auto custom-scrollbar"
+                            rows={1}
+                            style={{ minHeight: '52px' }}
                         />
 
                         {/* Action Button (Send/Stop) */}
-                        <div className="flex-shrink-0">
+                        <div className="flex-shrink-0 pb-1 pr-1">
                             {isTyping ? (
                                 <button 
                                     type="button" 
                                     onClick={handleStop} 
-                                    className="p-3 rounded-full text-white shadow-lg transition-all hover:scale-105 active:scale-95 animate-pulse" 
-                                    style={{ background: "linear-gradient(135deg, #ef4444, #f87171)", boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)" }}
+                                    className="p-3 rounded-full text-white shadow-lg transition-all hover:scale-105 active:scale-95 animate-pulse bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white"
                                 >
                                     <Pause size={20} fill="currentColor" />
                                 </button>
@@ -166,9 +185,10 @@ export const ChatInput = React.memo(({
                                     type="submit" 
                                     disabled={input.trim() === "" && !selectedFile} 
                                     className="p-3 rounded-full text-white shadow-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none" 
-                                    style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: input.trim() || selectedFile ? "0 4px 12px rgba(99, 102, 241, 0.3)" : "none" }}
+                                    // STYLE: Send Button Gradient (Cyan-Blue)
+                                    style={{ background: "linear-gradient(135deg, #0891b2, #2563eb)", boxShadow: input.trim() || selectedFile ? "0 4px 15px rgba(8, 145, 178, 0.3)" : "none" }}
                                 >
-                                    <Send size={20} fill="currentColor" />
+                                    <Send size={20} fill="currentColor" className={(!input.trim() && !selectedFile) ? "" : "ml-0.5"} />
                                 </button>
                             )}
                         </div>
@@ -192,5 +212,9 @@ export const ChatInput = React.memo(({
         </div>
     );
 });
+
+const PlusIcon = ({ size, className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+);
 
 export default ChatInput;

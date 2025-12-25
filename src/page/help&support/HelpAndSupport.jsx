@@ -18,7 +18,6 @@ const HelpAndSupport = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [openFaqIndex, setOpenFaqIndex] = useState(null);
 
-    // Dữ liệu mẫu cho FAQ
     const categories = [
         { id: "orders", label: "Orders & Shipping", icon: <Package size={18} /> },
         { id: "billing", label: "Billing & Refunds", icon: <CreditCard size={18} /> },
@@ -46,17 +45,14 @@ const HelpAndSupport = () => {
         ]
     };
 
-    // Logic lọc dữ liệu khi tìm kiếm hoặc chuyển tab
     const filteredFaqs = useMemo(() => {
         if (searchQuery.trim() !== "") {
-            // Nếu có tìm kiếm, gộp tất cả category và lọc
             const allFaqs = Object.values(faqData).flat();
             return allFaqs.filter(item => 
                 item.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 item.answer.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
-        // Nếu không tìm kiếm, trả về data của tab hiện tại
         return faqData[activeTab] || [];
     }, [searchQuery, activeTab]);
 
@@ -67,23 +63,26 @@ const HelpAndSupport = () => {
     return (
         <div className="bg-[#05050A] min-h-screen text-gray-300 font-sans pt-24 px-4 pb-12 relative isolate overflow-hidden">
             
-            {/* --- Background Effects (Giống file mẫu) --- */}
+            {/* --- Background Effects (Cyan/Blue) --- */}
             <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`}}></div>
-            <div className="fixed top-20 right-0 -z-10 w-[30rem] h-[30rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none"></div>
-            <div className="fixed bottom-0 left-0 -z-10 w-[30rem] h-[30rem] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none"></div>
+            <div className="fixed top-20 right-0 -z-10 w-[40rem] h-[40rem] bg-cyan-900/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="fixed bottom-0 left-0 -z-10 w-[40rem] h-[40rem] bg-blue-900/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-6xl mx-auto relative z-10">
+                
                 {/* Header Section */}
                 <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-                    <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">How can we help you?</h1>
-                    <div className="relative max-w-xl mx-auto mt-6">
-                        <Search className="absolute left-4 top-3.5 text-gray-500" size={20} />
+                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">How can we help you?</h1>
+                    <div className="relative max-w-xl mx-auto mt-8 group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Search className="text-gray-500 group-focus-within:text-cyan-400 transition-colors" size={20} />
+                        </div>
                         <input 
                             type="text" 
                             placeholder="Search for answers (e.g., 'refund', 'password')..." 
                             value={searchQuery}
                             onChange={(e) => { setSearchQuery(e.target.value); setOpenFaqIndex(null); }}
-                            className="w-full bg-[#0B0D14]/80 border border-white/10 rounded-2xl pl-12 pr-4 py-3.5 text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all shadow-xl backdrop-blur-md"
+                            className="w-full bg-[#0B0D14]/80 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all shadow-xl backdrop-blur-md"
                         />
                     </div>
                 </div>
@@ -91,32 +90,42 @@ const HelpAndSupport = () => {
                 <div className="flex flex-col lg:flex-row bg-[#0B0D14]/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl min-h-[600px]">
                     
                     {/* SIDEBAR NAVIGATION */}
-                    <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-white/10 bg-white/5 lg:bg-transparent p-6">
-                        <h2 className="text-lg font-bold text-white mb-6 px-2 flex items-center gap-2">
-                            <HelpCircle className="text-indigo-500" size={20}/> Support Center
-                        </h2>
-                        <nav className="space-y-2">
-                            {categories.map((cat) => (
-                                <button
-                                    key={cat.id}
-                                    onClick={() => { setActiveTab(cat.id); setSearchQuery(""); setOpenFaqIndex(null); }}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200
-                                        ${activeTab === cat.id && !searchQuery
-                                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
-                                            : "text-gray-400 hover:bg-white/5 hover:text-white"
-                                        }`}
-                                >
-                                    {cat.icon}
-                                    {cat.label}
-                                </button>
-                            ))}
-                        </nav>
+                    <aside className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-white/10 bg-white/[0.02] lg:bg-transparent p-6 flex flex-col justify-between">
+                        <div>
+                            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6 px-2 flex items-center gap-2">
+                                <HelpCircle className="text-cyan-500" size={16}/> Support Center
+                            </h2>
+                            <nav className="space-y-2">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => { setActiveTab(cat.id); setSearchQuery(""); setOpenFaqIndex(null); }}
+                                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 group relative overflow-hidden
+                                            ${activeTab === cat.id && !searchQuery
+                                                ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]" 
+                                                : "text-gray-400 hover:bg-white/5 hover:text-white border border-transparent"
+                                            }`}
+                                    >
+                                        <span className={`transition-transform duration-300 ${activeTab === cat.id && !searchQuery ? "scale-110" : "group-hover:scale-110"}`}>
+                                            {cat.icon}
+                                        </span>
+                                        {cat.label}
+                                        {activeTab === cat.id && !searchQuery && (
+                                            <div className="absolute right-0 top-0 bottom-0 w-1 bg-cyan-500 rounded-l-full"></div>
+                                        )}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
                         
-                        {/* Direct Contact Box in Sidebar */}
-                        <div className="mt-8 p-4 rounded-2xl bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20">
-                            <h3 className="text-white font-semibold mb-2 text-sm">Can't find an answer?</h3>
-                            <p className="text-xs text-gray-400 mb-4">Our team is available 24/7 to help you.</p>
-                            <button className="w-full py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-medium rounded-lg transition-colors border border-white/10">
+                        {/* Direct Contact Box */}
+                        <div className="mt-8 p-5 rounded-2xl bg-gradient-to-br from-cyan-900/10 to-blue-900/10 border border-cyan-500/10 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 p-3 opacity-10">
+                                <MessageCircle size={40} />
+                            </div>
+                            <h3 className="text-white font-bold mb-1 text-sm relative z-10">Can't find an answer?</h3>
+                            <p className="text-xs text-gray-400 mb-4 relative z-10 leading-relaxed">Our team is available 24/7 to assist you with any issues.</p>
+                            <button className="w-full py-2.5 px-3 bg-white/5 hover:bg-white/10 text-cyan-400 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors border border-white/5 relative z-10">
                                 Contact Support
                             </button>
                         </div>
@@ -126,18 +135,22 @@ const HelpAndSupport = () => {
                     <main className="flex-1 p-8 lg:p-12 overflow-y-auto custom-scrollbar relative">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             
-                            <div className="flex justify-between items-end mb-8 border-b border-white/5 pb-4">
+                            <div className="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
                                 <div>
-                                    <h3 className="text-2xl font-bold text-white mb-1">
+                                    <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
                                         {searchQuery ? `Results for "${searchQuery}"` : categories.find(c => c.id === activeTab)?.label}
                                     </h3>
                                     <p className="text-gray-500 text-sm">
                                         {searchQuery 
-                                            ? `Found ${filteredFaqs.length} articles` 
+                                            ? `Found ${filteredFaqs.length} articles matching your query.` 
                                             : "Frequently asked questions in this category."}
                                     </p>
                                 </div>
-                                {!searchQuery && <FileText className="text-indigo-500/50 mb-1" size={32} />}
+                                {!searchQuery && (
+                                    <div className="hidden md:block p-3 bg-white/5 rounded-2xl text-cyan-500/50">
+                                        <FileText size={32} />
+                                    </div>
+                                )}
                             </div>
 
                             {/* FAQ LIST */}
@@ -146,40 +159,38 @@ const HelpAndSupport = () => {
                                     filteredFaqs.map((faq, index) => (
                                         <div 
                                             key={index} 
-                                            className={`group rounded-xl border transition-all duration-300 overflow-hidden
+                                            className={`group rounded-2xl border transition-all duration-300 overflow-hidden
                                                 ${openFaqIndex === index 
-                                                    ? "bg-white/[0.03] border-indigo-500/30 shadow-lg" 
+                                                    ? "bg-white/[0.03] border-cyan-500/30 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.3)]" 
                                                     : "bg-transparent border-white/5 hover:border-white/10 hover:bg-white/[0.02]"
                                                 }`}
                                         >
                                             <button 
                                                 onClick={() => toggleFaq(index)}
-                                                className="w-full flex items-center justify-between p-5 text-left"
+                                                className="w-full flex items-center justify-between p-5 text-left focus:outline-none"
                                             >
-                                                <span className={`font-medium transition-colors ${openFaqIndex === index ? "text-indigo-400" : "text-gray-300 group-hover:text-white"}`}>
+                                                <span className={`font-medium transition-colors text-base pr-4 ${openFaqIndex === index ? "text-cyan-400" : "text-gray-300 group-hover:text-white"}`}>
                                                     {faq.question}
                                                 </span>
-                                                {openFaqIndex === index ? (
-                                                    <ChevronUp className="text-indigo-500 transition-transform" size={18} />
-                                                ) : (
-                                                    <ChevronDown className="text-gray-500 group-hover:text-white transition-transform" size={18} />
-                                                )}
+                                                <div className={`p-1 rounded-full transition-all duration-300 ${openFaqIndex === index ? "bg-cyan-500/10 rotate-180" : "bg-white/5 group-hover:bg-white/10"}`}>
+                                                    <ChevronDown className={`transition-colors ${openFaqIndex === index ? "text-cyan-400" : "text-gray-500 group-hover:text-white"}`} size={18} />
+                                                </div>
                                             </button>
                                             
                                             <div 
                                                 className={`transition-all duration-300 ease-in-out overflow-hidden
-                                                ${openFaqIndex === index ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}
+                                                ${openFaqIndex === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
                                             >
-                                                <div className="p-5 pt-0 text-gray-400 text-sm leading-relaxed border-t border-white/5">
+                                                <div className="p-5 pt-0 text-gray-400 text-sm leading-relaxed border-t border-white/5 mt-2">
                                                     {faq.answer}
                                                 </div>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="text-center py-12">
+                                    <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-dashed border-white/10">
                                         <div className="bg-white/5 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-500">
-                                            <Search size={24} />
+                                            <Search size={28} />
                                         </div>
                                         <h3 className="text-white font-medium mb-1">No results found</h3>
                                         <p className="text-gray-500 text-sm">Try using different keywords or browse the categories.</p>
@@ -189,28 +200,28 @@ const HelpAndSupport = () => {
 
                             {/* STILL NEED HELP SECTION */}
                             <div className="mt-16 pt-8 border-t border-white/10">
-                                <h4 className="text-white font-semibold mb-6">Still need help?</h4>
+                                <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-wider">Still need help?</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
+                                    <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-emerald-500/30 transition-all cursor-pointer group">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-                                                <MessageCircle size={20} />
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform shadow-lg shadow-emerald-900/20">
+                                                <MessageCircle size={22} />
                                             </div>
                                             <div>
-                                                <h5 className="text-white font-medium text-sm">Live Chat</h5>
-                                                <p className="text-gray-500 text-xs mt-0.5">Wait time: ~2 mins</p>
+                                                <h5 className="text-white font-bold text-sm group-hover:text-emerald-400 transition-colors">Live Chat</h5>
+                                                <p className="text-gray-500 text-xs mt-1">Wait time: ~2 mins</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors cursor-pointer group">
+                                    <div className="p-5 rounded-2xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] hover:border-blue-500/30 transition-all cursor-pointer group">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
-                                                <Mail size={20} />
+                                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform shadow-lg shadow-blue-900/20">
+                                                <Mail size={22} />
                                             </div>
                                             <div>
-                                                <h5 className="text-white font-medium text-sm">Email Support</h5>
-                                                <p className="text-gray-500 text-xs mt-0.5">Response within 24h</p>
+                                                <h5 className="text-white font-bold text-sm group-hover:text-blue-400 transition-colors">Email Support</h5>
+                                                <p className="text-gray-500 text-xs mt-1">Response within 24h</p>
                                             </div>
                                         </div>
                                     </div>
