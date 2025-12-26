@@ -202,8 +202,8 @@ const Dashboard = () => {
 
                 <nav className="flex-1 space-y-1 px-4 py-24">
                     <NavItem to="/dashboard" icon={<HomeIcon />} label="Overview" />
-                    <NavItem to="/dashboard/users" icon={<UsersIcon />} label="Users" />
                     <NavItem to="/dashboard/analytics" icon={<ChartBarIcon />} label="Analytics" />
+                    <NavItem to={`/profile/${user?.id}`} icon={<UserIcon />} label="Profile" />
                     <NavItem to="/setting" icon={<CogIcon />} label="Settings" />
                 </nav>
 
