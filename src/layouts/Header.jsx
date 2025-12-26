@@ -11,12 +11,13 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { supabase } from '../routes/supabaseClient'; // Đảm bảo đường dẫn đúng
 import LazyLoading from '../page/enhancements/LazyLoading'; // Đảm bảo đường dẫn đúng
 import UserAvatar from '../components/UserAvatar'; // Đảm bảo đường dẫn đúng
+import NeedAuthModal from '../components/NeedAuthModal';
 
 const navigation = [
-    { name: 'Product', href: 'product' },
-    { name: 'Community', href: 'community' },
-    { name: 'Docs', href: 'docs' },
-    { name: 'Chatbot AI', href: 'chatbot-ai' },
+    { name: 'Product', href: 'product', private: true },
+    { name: 'Community', href: 'community', private: true },
+    { name: 'Docs', href: 'docs', private: false },
+    { name: 'Chatbot AI', href: 'chatbot-ai', private: true },
 ];
 
 const Header = ({ user }) => {
@@ -34,6 +35,7 @@ const Header = ({ user }) => {
     // --- State Thông báo ---
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [isAuthModalOpen, setIsAuthModalOpen ] = useState(false);
 
     const dropdownRef = useRef(null);
     const notiRef = useRef(null);
@@ -138,6 +140,7 @@ const Header = ({ user }) => {
     const handleLogout = async () => {
         setDropdownOpen(false);
         setLoggingOut(true);
+        navigate('/'); // Điều hướng về Home trước để tránh PrivateRoute hiện modal
         await supabase.auth.signOut();
         setTimeout(() => setLoggingOut(false), 800);
     };
@@ -209,19 +212,30 @@ const Header = ({ user }) => {
                 </div>
 
                 {/* Desktop Navigation */}
-                <div className="hidden lg:flex lg:gap-x-10 relative">
+                <div className="hidden lg:flex lg:gap-x-2 relative items-center">
                     {navigation.map((item) => (
-                        <NavLink key={item.name} to={item.href} className="relative group py-2">
-                            {({ isActive }) => (
-                                <>
-                                    <span className={`text-sm font-medium transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-cyan-400'}`}>
-                                        {item.name}
-                                    </span>
-                                    {/* Glow Line Effect */}
-                                    <span className={`absolute -bottom-1 left-0 w-full h-[2px] bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.8)] transition-all duration-300 ${isActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-50 group-hover:scale-x-50'}`}></span>
-                                </>
-                            )}
-                        </NavLink>
+                        <div key={item.name} className="relative group">
+                            <NavLink 
+                                to={item.href} 
+                                onClick={(e) => {
+                                    if (!user && item.private) {
+                                        e.preventDefault();
+                                        setIsAuthModalOpen(true);
+                                    }
+                                }}
+                                className="relative px-6 py-5 flex items-center transition-all duration-300"
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <span className={`text-[15px] font-bold tracking-tight transition-colors duration-300 ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-cyan-400'}`}>
+                                            {item.name}
+                                        </span>
+                                        {/* Glow Line Effect */}
+                                        <span className={`absolute bottom-3 left-6 right-6 h-[2px] bg-cyan-500 shadow-[0_0_15px_rgba(6,182,212,1)] transition-all duration-500 ${isActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-70 group-hover:scale-x-100'}`}></span>
+                                    </>
+                                )}
+                            </NavLink>
+                        </div>
                     ))}
                 </div>
 
@@ -374,9 +388,19 @@ const Header = ({ user }) => {
                         </>
                     ) : (
                         <>
-                            <Link to="/signin" className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">Sign in</Link>
-                            <Link to="/signup" className="px-5 py-2.5 rounded-xl bg-white text-black text-sm font-bold hover:bg-cyan-400 hover:text-white hover:shadow-[0_0_20px_rgba(34,211,238,0.5)] transition-all active:scale-95">
-                                Sign up
+                            <Link 
+                                to="/signin" 
+                                className="group px-4 py-5 flex items-center gap-2 text-[15px] font-bold text-gray-400 hover:text-cyan-400 transition-all duration-300"
+                            >
+                                <span>Sign In</span>
+                            </Link>
+
+                            <Link 
+                                to="/signup" 
+                                className="relative group px-8 py-3.5 flex items-center gap-2 overflow-hidden rounded-full bg-cyan-500 text-black text-sm font-black uppercase tracking-tighter hover:bg-white hover:shadow-[0_0_40px_rgba(6,182,212,0.6)] hover:scale-105 active:scale-95 transition-all duration-500"
+                            >
+                                <span>Sign Up</span>
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
                             </Link>
                         </>
                     )}
@@ -402,7 +426,22 @@ const Header = ({ user }) => {
                         <div className="-my-6 divide-y divide-white/10">
                             <div className="space-y-2 py-6">
                                 {navigation.map((item) => (
-                                    <Link key={item.name} to={item.href} className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-white/10" onClick={() => setMobileMenuOpen(false)}>{item.name}</Link>
+                                    <Link 
+                                        key={item.name} 
+                                        to={item.href} 
+                                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-white/10" 
+                                        onClick={(e) => {
+                                            if (!user && item.private) {
+                                                e.preventDefault();
+                                                setMobileMenuOpen(false);
+                                                setIsAuthModalOpen(true);
+                                            } else {
+                                                setMobileMenuOpen(false);
+                                            }
+                                        }}
+                                    >
+                                        {item.name}
+                                    </Link>
                                 ))}
                             </div>
                             <div className="py-6">
@@ -425,9 +464,21 @@ const Header = ({ user }) => {
                                         <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full text-center px-4 py-2.5 text-sm font-semibold text-white bg-red-600/20 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-600/30 flex items-center justify-center gap-2"><ArrowRightOnRectangleIcon className="w-5 h-5" /> Logout</button>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col gap-3">
-                                        <Link to="/signin" className="w-full text-center rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-white hover:bg-white/10 border border-white/10" onClick={() => setMobileMenuOpen(false)}>Sign in</Link>
-                                        <Link to="/signup" className="w-full text-center rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-black bg-white hover:bg-cyan-400 hover:text-white transition-colors" onClick={() => setMobileMenuOpen(false)}>Sign up</Link>
+                                    <div className="flex flex-col gap-4">
+                                        <Link 
+                                            to="/signin" 
+                                            className="w-full flex items-center justify-center gap-3 rounded-2xl px-3 py-3.5 text-base font-bold text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all hover:text-cyan-400" 
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <ArrowRightOnRectangleIcon className="w-5 h-5" /> Sign In
+                                        </Link>
+                                        <Link 
+                                            to="/signup" 
+                                            className="w-full flex items-center justify-center gap-3 rounded-2xl px-3 py-3.5 text-base font-black text-black bg-cyan-500 hover:bg-white shadow-[0_10px_30px_rgba(6,182,212,0.3)] transition-all" 
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <UserPlusIcon className="w-5 h-5" /> Sign Up
+                                        </Link>
                                     </div>
                                 )}
                             </div>
@@ -470,6 +521,8 @@ const Header = ({ user }) => {
                     </div>
                 </Dialog>
             </Transition>
+            {/* AUTH MODAL */}
+            <NeedAuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
         </header>
     );
 };

@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from './supabaseClient';
 import LazyLoading from '../page/enhancements/LazyLoading';
+import NeedAuthModal from '../components/NeedAuthModal';
 
 const PrivateRoute = () => {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
-    const location = useLocation();
+    const [isModalOpen, setIsModalOpen] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        // Kiểm tra session hiện tại
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             setLoading(false);
         });
 
-        // Lắng nghe thay đổi auth (đăng nhập/đăng xuất)
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             setLoading(false);
@@ -28,9 +28,27 @@ const PrivateRoute = () => {
         return <LazyLoading status="Verifying access..." />;
     }
 
-    // Nếu có session -> Cho phép đi tiếp (Render Outlet - trang con)
-    // Nếu không -> Đá về trang Sign In, kèm theo state để biết redirect từ đâu
-    return session ? <Outlet /> : <Navigate to="/signin" state={{ from: location }} replace />;
+    if (session) {
+        return <Outlet />;
+    }
+
+    // Nếu không có session, render một background ảo và Modal yêu cầu đăng nhập
+    return (
+        <div className="min-h-screen bg-[#020205] relative overflow-hidden flex items-center justify-center">
+            {/* Background Effects */}
+            <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40rem] h-[40rem] bg-cyan-900/10 rounded-full blur-[120px]"></div>
+            </div>
+            
+            <NeedAuthModal 
+                isOpen={isModalOpen} 
+                onClose={() => {
+                    setIsModalOpen(false);
+                    navigate('/'); // Quay về Home nếu đóng modal
+                }} 
+            />
+        </div>
+    );
 };
 
 export default PrivateRoute;

@@ -161,6 +161,7 @@ const routes = [
     {
         path: "/chatbot-ai",
         element: ChatbotAIPage, 
+        private: true, // Thêm bảo vệ đăng nhập
         name: "Chatbot AI",
     },
     // -----------------------------------------------------------
