@@ -15,15 +15,28 @@ export default function AuthCallback() {
                 if (error) throw error;
 
                 if (data?.session) {
+                    const user = data.session.user;
+                    const metadata = user.user_metadata || {};
+                    
+                    // --- ĐỒNG BỘ DỮ LIỆU SANG BẢNG PROFILES ---
                     const { error: updateError } = await supabase
-                        .from("user_profiles")
-                        .update({ email_verified: true })
-                        .eq("id", data.session.user.id);
+                        .from("profiles")
+                        .update({ 
+                            email_verified: true,
+                            full_name: metadata.full_name || metadata.name,
+                            avatar_url: metadata.avatar_url || metadata.picture
+                        })
+                        .eq("id", user.id);
 
                     if (updateError) {
-                        console.warn("Update verify failed:", updateError);
+                        console.warn("Sync profile failed:", updateError);
                     }
-                    await supabase.auth.signOut();
+                    
+                    // Nếu là đăng ký/xác thực email thông thường -> Sign out để bắt đăng nhập lại
+                    // Nếu là social login (có metadata) -> Có thể chuyển hướng trực tiếp
+                    if (!metadata.full_name) {
+                        await supabase.auth.signOut();
+                    }
                 }
 
                 setTimeout(() => {

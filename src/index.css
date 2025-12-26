@@ -10,6 +10,9 @@ html {
     scrollbar-gutter: stable;
 }
 
+button{
+    cursor: pointer;
+}
 
 ::-webkit-scrollbar {
     width: 10px;

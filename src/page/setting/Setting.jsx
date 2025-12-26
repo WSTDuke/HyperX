@@ -68,17 +68,39 @@ const Setting = ({ user }) => {
             const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
-            if (uploadError) throw uploadError;
+            console.log("1. Starting upload to storage...");
+            const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+            if (uploadError) {
+                console.error("Storage upload failed:", uploadError);
+                throw uploadError;
+            }
 
+            console.log("2. Fetching public URL...");
             const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
             const publicUrl = data.publicUrl;
 
-            const { error: updateError } = await supabase.auth.updateUser({
+            console.log("3. Updating Auth Metadata...");
+            const { error: authError } = await supabase.auth.updateUser({
                 data: { avatar_url: publicUrl },
             });
-            if (updateError) throw updateError;
+            if (authError) {
+                console.error("Auth update failed:", authError);
+                throw authError;
+            }
+            
+            console.log("4. Syncing to Public Profiles table...");
+            // --- QUAN TRỌNG: DÙNG UPSERT ĐỂ ĐẢM BẢO ROW TỒN TẠI ---
+            const { error: syncError } = await supabase.from('profiles').upsert({ 
+                id: currentUser.id,
+                avatar_url: publicUrl
+            });
 
+            if (syncError) {
+                console.error("Profile sync failed:", syncError);
+                // Không throw ở đây để user metadata vẫn được cập nhật local
+            }
+
+            console.log("5. Refreshing session...");
             await supabase.auth.refreshSession();
 
             setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
@@ -90,8 +112,8 @@ const Setting = ({ user }) => {
             setSuccessMessage("Avatar uploaded successfully!");
 
         } catch (error) {
-            console.error('Error uploading avatar:', error.message);
-            alert(error.message);
+            console.error('Final upload error:', error);
+            alert(`Upload failed: ${error.message || 'Network error'}`);
         } finally {
             setUploading(false);
         }
@@ -106,11 +128,17 @@ const Setting = ({ user }) => {
             return;
         }
 
-        const { error } = await supabase.auth.updateUser({
+        const { error: authError } = await supabase.auth.updateUser({
             data: { full_name: formData.name },
         });
 
-        if (!error) {
+        if (!authError) {
+            // --- QUAN TRỌNG: DÙNG UPSERT ĐỂ ĐẢM BẢO ROW TỒN TẠI ---
+            await supabase.from('profiles').upsert({ 
+                id: currentUser.id,
+                full_name: formData.name
+            });
+
             setIsEditingName(false);
             setSuccessMessage("Name updated successfully.");
             await supabase.auth.refreshSession();
@@ -119,7 +147,8 @@ const Setting = ({ user }) => {
                 user_metadata: { ...prev.user_metadata, full_name: formData.name },
             }));
         } else {
-            console.error(error.message);
+            console.error("Name update failed:", authError.message);
+            alert("Error updating name: " + authError.message);
         }
     };
 

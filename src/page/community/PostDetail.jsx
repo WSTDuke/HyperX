@@ -24,18 +24,28 @@ const PostDetail = () => {
                 .eq('id', id)
                 .single(); 
 
-            if (error) {
-                console.error("Error loading post:", error);
-            } else {
+            if (!error && data) {
+                const profile = Array.isArray(data.profiles) ? data.profiles[0] : (data.profiles || {});
+                const metadata = data.raw_user_meta_data || {};
+                const fullName = data.full_name || profile?.full_name || profile?.name || metadata.full_name || metadata.name || "Anonymous";
+                const avatarUrl = data.avatar_url || profile?.avatar_url || profile?.picture || profile?.avatar || metadata.avatar_url || metadata.picture || metadata.avatar;
+
                 const formattedPost = {
                     ...data,
+                    full_name: fullName,
+                    avatar_url: avatarUrl,
+                    profiles: profile, // Giữ profile đầy đủ
                     raw_user_meta_data: {
-                        full_name: data.profiles?.full_name,
-                        avatar_url: data.profiles?.avatar_url
+                        ...metadata,
+                        ...profile, // Trộn profile vào metadata
+                        full_name: fullName,
+                        avatar_url: avatarUrl
                     },
-                    email: data.profiles?.email
+                    email: data.email || profile?.email || metadata.email
                 };
                 setPost(formattedPost);
+            } else if (error) {
+                console.error("Error loading post:", error);
             }
             setIsLoading(false);
         };

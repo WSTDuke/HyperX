@@ -14,7 +14,7 @@ const UserProfile = () => {
 
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
-    const [products, setProducts] = useState([]); // State này sẽ chứa danh sách Projects
+    const [products, setProducts] = useState([]); 
     const [currentUser, setCurrentUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -49,51 +49,95 @@ const UserProfile = () => {
             }
 
             try {
-                // 1. Fetch Profile trước để đảm bảo user tồn tại
-                const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', targetUserId).single();
+                // 1. Fetch Profile
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', targetUserId)
+                    .single();
+                
                 if (profileError) throw profileError;
+                
+                let updatedProfile = { ...profileData };
 
-                // 2. Fetch song song các dữ liệu còn lại (bao gồm projects)
+                // --- LOGIC: TỰ ĐỘNG ĐỒNG BỘ NẾU TRỐNG (SYNC ON VIEW) ---
+                if (user && user.id === targetUserId) {
+                    const metadata = user.user_metadata || {};
+                    const needsSync = !profileData.avatar_url || !profileData.full_name;
+
+                    if (needsSync) {
+                        const syncData = {
+                            full_name: profileData.full_name || metadata.full_name || metadata.name,
+                            avatar_url: profileData.avatar_url || metadata.avatar_url || metadata.picture
+                        };
+
+                        // Cập nhật database dùng upsert để đảm bảo row tồn tại
+                        const { error: syncError } = await supabase.from('profiles').upsert({ 
+                            id: user.id,
+                            ...syncData
+                        });
+                        
+                        if (syncError) console.error("Auto-sync profile failed:", syncError);
+                        
+                        // Cập nhật state local để hiển thị ngay
+                        updatedProfile = { ...updatedProfile, ...syncData };
+                    }
+                }
+
+  
                 const [
                     { data: postsData, error: postsError }, 
                     { count: followerCount }, 
                     { count: followingCount },
-                    { data: projectsData, error: projectsError } // <-- Lấy dữ liệu PROJECTS
+                    { data: productsData, error: productsError } 
                 ] = await Promise.all([
-                    supabase.from('community_posts').select('*, profiles(*)').eq('user_id', targetUserId).order('created_at', { ascending: false }),
+                    supabase.from('community_posts')
+                        .select('*, profiles(*)')
+                        .eq('user_id', targetUserId)
+                        .order('created_at', { ascending: false }),
                     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId),
                     supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId),
-                    supabase.from('projects').select('*').eq('user_id', targetUserId).order('created_at', { ascending: false }) // <-- Query bảng projects
+                    supabase.from('products').select('*').eq('user_id', targetUserId).order('created_at', { ascending: false }) 
                 ]);
 
                 if (postsError) throw postsError;
-                if (projectsError) console.error("Error fetching projects:", projectsError);
+                if (productsError) console.error("Error fetching products:", productsError);
 
-                setProfile(profileData);
+                setProfile(updatedProfile);
+                setProducts(productsData || []);
 
-                // Cập nhật State cho Projects (vào biến products để tái sử dụng UI)
-                setProducts(projectsData || []);
-
-                // Format Posts (Xử lý thông tin user cho bài viết)
-                const formattedPosts = postsData.map(post => ({
-                    ...post,
-                    raw_user_meta_data: { full_name: post.profiles?.full_name, avatar_url: post.profiles?.avatar_url },
-                    email: post.profiles?.email
-                }));
+                // FIX ẢNH POSTS: Giữ nguyên avatar_url thô cho PostItem / UserAvatar xử lý
+                const formattedPosts = postsData.map(post => {
+                    const profileInfo = post.profiles || {};
+                    const metadata = post.raw_user_meta_data || {};
+                    return {
+                        ...post,
+                        raw_user_meta_data: { 
+                            ...metadata,
+                            full_name: post.full_name || profileInfo.full_name || metadata.full_name || profileInfo.name || metadata.name, 
+                            avatar_url: post.avatar_url || profileInfo.avatar_url || profileInfo.picture || metadata.avatar_url || metadata.picture
+                        },
+                        email: post.email || profileInfo.email
+                    };
+                });
                 setPosts(formattedPosts);
 
-                // Cập nhật Stats
                 setStats({
                     postCount: postsData.length,
                     likeCount: formattedPosts.reduce((acc, curr) => acc + (curr.like_count || 0), 0),
-                    productCount: projectsData?.length || 0, // Đếm số lượng project
+                    productCount: productsData?.length || 0,
                     followerCount: followerCount || 0,
                     followingCount: followingCount || 0
                 });
 
                 // Check Follow Status
                 if (user && user.id !== targetUserId) {
-                    const { data: followData } = await supabase.from('follows').select('follower_id').eq('follower_id', user.id).eq('following_id', targetUserId).maybeSingle();
+                    const { data: followData } = await supabase
+                        .from('follows')
+                        .select('follower_id')
+                        .eq('follower_id', user.id)
+                        .eq('following_id', targetUserId)
+                        .maybeSingle();
                     setIsFollowing(!!followData);
                 }
 
@@ -118,8 +162,7 @@ const UserProfile = () => {
         if (isUpdatingFollow) return;
         setIsUpdatingFollow(true);
         const prevFollow = isFollowing;
-        const prevStats = { ...stats };
-
+        
         setIsFollowing(!prevFollow);
         setStats(prev => ({ ...prev, followerCount: prevFollow ? prev.followerCount - 1 : prev.followerCount + 1 }));
 
@@ -132,7 +175,7 @@ const UserProfile = () => {
         } catch (error) {
             console.error("Follow error:", error);
             setIsFollowing(prevFollow);
-            setStats(prevStats);
+            setStats(prev => ({ ...prev, followerCount: prevFollow ? prev.followerCount + 1 : prev.followerCount - 1 }));
         } finally {
             setIsUpdatingFollow(false);
         }
@@ -140,26 +183,24 @@ const UserProfile = () => {
 
     const handleTabChange = (tab) => setActiveTab(prev => prev === tab ? 'all' : tab);
 
-    // --- LOADING ---
+    // --- RENDER ---
     if (isLoading) return (
         <div className="min-h-screen bg-[#05050A] flex flex-col items-center justify-center gap-4">
-            <div className="w-12 h-12 border-t-2 border-indigo-500 rounded-full animate-spin"></div>
-            <p className="text-indigo-400 font-mono text-sm animate-pulse">LOADING PROFILE...</p>
+            <div className="w-12 h-12 border-t-2 border-cyan-500 rounded-full animate-spin"></div>
+            <p className="text-cyan-400 font-mono text-sm animate-pulse">LOADING PROFILE...</p>
         </div>
     );
 
-    // --- NOT FOUND ---
     if (!profile) return (
         <div className="min-h-screen bg-[#05050A] flex flex-col items-center justify-center text-center gap-6">
             <div className="p-6 bg-white/5 rounded-full"><UserX size={48} className="text-gray-500" /></div>
             <h2 className="text-2xl font-bold text-white">User Not Found</h2>
-            <button onClick={() => navigate('/')} className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors">Go Home</button>
+            <button onClick={() => navigate('/')} className="px-6 py-2 bg-cyan-600 text-black font-bold rounded-lg hover:bg-cyan-500 transition-colors">Go Home</button>
         </div>
     );
 
     const isOwnProfile = currentUser && currentUser.id === profile.id;
 
-    // --- SINGLE POST VIEW ---
     if (selectedPostId) {
         const selectedPost = posts.find(p => p.id === selectedPostId);
         return (
@@ -178,7 +219,6 @@ const UserProfile = () => {
         );
     }
 
-    // --- MAIN VIEW ---
     return (
         <div className="min-h-screen bg-[#05050A] text-gray-100 pb-20 relative isolate overflow-x-hidden">
             
@@ -191,7 +231,7 @@ const UserProfile = () => {
                 <div className="relative rounded-b-3xl bg-[#0B0D14] border border-white/10 shadow-2xl overflow-hidden">
                     
                     {/* Banner Image */}
-                    <div className="h-48 md:h-64 w-full relative bg-gradient-to-r from-violet-900 via-indigo-900 to-cyan-900 z-5">
+                    <div className="h-48 md:h-64 w-full relative bg-gradient-to-r from-cyan-900 via-blue-900 to-purple-900 z-5">
                          <div className="absolute inset-0 bg-black/10"></div>
                     </div>
 
@@ -200,11 +240,18 @@ const UserProfile = () => {
                             
                             {/* Avatar */}
                             <div className="relative group z-10">
-                                <div className="p-0.5 bg-[#0B0D14] rounded-full ring-[#0B0D14] shadow-2xl ">
+                                <div className="p-1 bg-[#0B0D14] rounded-full ring-1 ring-white/10 shadow-2xl">
                                     <UserAvatar 
-                                        user={{ raw_user_meta_data: { avatar_url: profile.avatar_url, full_name: profile.full_name }, email: profile.email }} 
+                                        user={{ 
+                                            ...profile,
+                                            raw_user_meta_data: { 
+                                                ...profile,
+                                                avatar_url: profile.avatar_url, 
+                                                full_name: profile.full_name 
+                                            }
+                                        }} 
                                         size="xl" 
-                                        className="w-32 h-32 md:w-44 md:h-44 text-5xl object-cover z-" 
+                                        className="w-32 h-32 md:w-44 md:h-44 text-5xl object-cover" 
                                     />
                                 </div>
                             </div>
@@ -215,11 +262,11 @@ const UserProfile = () => {
                                 
                                 <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm font-medium text-gray-400">
                                     <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                        <Mail size={14} className="text-indigo-400" />
+                                        <Mail size={14} className="text-cyan-400" />
                                         <span>{profile.email}</span>
                                     </div>
                                     <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
-                                        <Calendar size={14} className="text-purple-400" />
+                                        <Calendar size={14} className="text-blue-400" />
                                         <span>Joined {new Date(profile.created_at || Date.now()).toLocaleDateString()}</span>
                                     </div>
                                 </div>
@@ -228,7 +275,7 @@ const UserProfile = () => {
                             {/* Buttons */}
                             <div className="w-full md:w-auto flex justify-center gap-3 mb-2 md:mb-0">
                                 {isOwnProfile ? (
-                                    <button onClick={() => navigate('/setting')} className="flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl font-semibold text-white transition-all">
+                                    <button onClick={() => navigate('/setting')} className="flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl font-semibold text-white transition-all hover:scale-105 active:scale-95">
                                         <Edit3 size={18} /> Edit Profile
                                     </button>
                                 ) : (
@@ -238,7 +285,7 @@ const UserProfile = () => {
                                         className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg active:scale-95
                                         ${isFollowing 
                                             ? 'bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:border-red-500/30' 
-                                            : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-indigo-500/20'}`}
+                                            : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:brightness-110 shadow-cyan-500/20'}`}
                                     >
                                         {isFollowing ? <><UserCheck size={18} /> Following</> : <><UserPlus size={18} /> Follow</>}
                                     </button>
@@ -253,7 +300,7 @@ const UserProfile = () => {
                                 onClick={() => handleTabChange('products')} active={activeTab === 'products'} 
                             />
                             <StatCard 
-                                label="Posts" value={stats.postCount} icon={<Grid />} color="text-indigo-400" 
+                                label="Posts" value={stats.postCount} icon={<Grid />} color="text-blue-400" 
                                 onClick={() => handleTabChange('posts')} active={activeTab === 'posts'} 
                             />
                             <StatCard label="Followers" value={stats.followerCount} icon={<UserPlus />} color="text-pink-400" />
@@ -290,14 +337,14 @@ const UserProfile = () => {
                     {(activeTab === 'all' || activeTab === 'posts') && (
                         <div className="animate-in fade-in slide-in-from-bottom-6 duration-500 delay-100">
                             <div className="flex items-center gap-3 mb-6 px-1">
-                                <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400"><Grid size={22} /></div>
+                                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400"><Grid size={22} /></div>
                                 <h2 className="text-2xl font-bold text-white">Community Activity</h2>
                             </div>
                             
                             {posts.length > 0 ? (
                                 <div className="grid gap-6">
                                     {posts.map(post => (
-                                        <div key={post.id} className="bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:border-indigo-500/30 transition-colors">
+                                        <div key={post.id} className="bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:border-cyan-500/30 transition-colors">
                                             <PostItem post={post} currentUser={currentUser} onPostDeleted={handlePostDeleted} onPostUpdated={handlePostUpdated} />
                                         </div>
                                     ))}
@@ -336,7 +383,7 @@ const StatCard = ({ label, value, icon, color, active, onClick }) => (
     </div>
 );
 
-// --- PRODUCT CARD (Fix hiển thị ảnh full khung) ---
+// --- PRODUCT CARD ---
 const ProductCard = ({ item, formatCurrency }) => (
     <Link to={`/product/${item.id}`} className="group relative flex-shrink-0 block w-[280px] sm:w-full h-full">
         <div className="relative h-full bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-1 transition-transform duration-300 flex flex-col hover:shadow-xl hover:shadow-cyan-900/10">
@@ -347,7 +394,6 @@ const ProductCard = ({ item, formatCurrency }) => (
                     <img 
                         src={item.image_url} 
                         alt={item.name} 
-                        // CSS giúp ảnh lấp đầy khung mà không bị méo (object-cover)
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" 
                     />
                 ) : (

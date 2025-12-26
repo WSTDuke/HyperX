@@ -1,13 +1,13 @@
 import React, { useEffect, useState, memo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import UserAvatar from "../../components/UserAvatar"; // Đảm bảo đường dẫn đúng
-import formatTime from "./formatTime"; // Đảm bảo file này tồn tại
+import UserAvatar from "../../components/UserAvatar"; 
+import formatTime from "./formatTime"; 
 import { EditIcon, Heart, MessageCircle, MoreHorizontal, Send, Trash2, Share2, CornerDownRight } from "lucide-react";
-import DeleteConfirmModal from "./DeleteConfirmModal"; // Đảm bảo đường dẫn đúng
+import DeleteConfirmModal from "./DeleteConfirmModal"; 
 import { supabase } from "../../routes/supabaseClient";
 import PostFormModal from "./PostFormModal";
 
-// --- SUB-COMPONENT: CommentItem ---
+// --- SUB-COMPONENT: CommentItem (Không đổi) ---
 const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReplySuccess, depth = 0, highlightId }) => {
     const [likes, setLikes] = useState(0); 
     const [isLiked, setIsLiked] = useState(false);
@@ -15,19 +15,22 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     const [replyContent, setReplyContent] = useState("");
     const [isSendingReply, setIsSendingReply] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
-
     const commentRef = React.useRef(null);
     const [isHighlighted, setIsHighlighted] = useState(false);
-
+    
     const indentLevel = depth > 2 ? 2 : depth;
     const paddingLeftValue = indentLevel * 24; 
     const childComments = allComments.filter(c => c.parent_id === comment.id);
 
+    // Xử lý thông tin profile linh hoạt (cho cả dữ liệu từ view flat hoặc join nested)
+    const profile = Array.isArray(comment.profiles) ? comment.profiles[0] : (comment.profiles || {});
+    const metadata = comment.raw_user_meta_data || {};
+    const authorName = comment.full_name || profile?.full_name || profile?.name || metadata.full_name || metadata.name || "Anonymous";
+    const avatarUrl = comment.avatar_url || profile?.avatar_url || profile?.picture || profile?.avatar || metadata.avatar_url || metadata.picture || metadata.avatar;
+
     useEffect(() => {
         if (highlightId && String(comment.id) === String(highlightId)) {
-            setTimeout(() => {
-                commentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 500);
+            setTimeout(() => { commentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 500);
             setIsHighlighted(true);
             const timer = setTimeout(() => setIsHighlighted(false), 2500); 
             return () => clearTimeout(timer);
@@ -59,8 +62,7 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
     const handleToggleReply = () => {
         if (!currentUser) return alert("Please log in.");
         if (!showReplyInput) {
-            const name = comment.raw_user_meta_data?.full_name || comment.email?.split('@')[0] || "User";
-            setReplyContent(`@${name} `);
+            setReplyContent(`@${authorName} `);
         }
         setShowReplyInput(!showReplyInput);
     };
@@ -70,44 +72,53 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
         setIsSendingReply(true);
         const { data, error } = await supabase.from("post_comments").insert({ 
             post_id: comment.post_id, user_id: currentUser.id, content: replyContent, parent_id: comment.id 
-        }).select("*").single();
-
+        }).select("*, profiles(*)").single();
         if (!error && data) {
-            const newReply = { ...data, email: currentUser.email, raw_user_meta_data: currentUser.user_metadata || currentUser.raw_user_meta_data };
-            onReplySuccess(newReply);
-            setReplyContent("");
-            setShowReplyInput(false);
+            const newReply = { 
+                ...data, 
+                email: currentUser.email, 
+                raw_user_meta_data: currentUser.user_metadata || currentUser.raw_user_meta_data, 
+                profiles: data.profiles || { full_name: currentUser.user_metadata?.full_name, avatar_url: currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture }
+            };
+            onReplySuccess(newReply); setReplyContent(""); setShowReplyInput(false);
         } else { alert("Error replying: " + error?.message); }
         setIsSendingReply(false);
     };
 
     return (
         <div className="flex flex-col relative" ref={commentRef}>
-            <div 
-                className={`flex gap-3 group relative p-3 rounded-xl transition-all duration-500 ease-in-out border border-transparent
-                    ${isHighlighted ? 'bg-cyan-500/10 border-cyan-500/30' : 'hover:bg-white/[0.03]'} 
-                `}
-                style={{ marginLeft: `${paddingLeftValue}px` }}
-            >
+            <div className={`flex gap-3 group relative p-3 rounded-xl transition-all duration-500 ease-in-out border border-transparent ${isHighlighted ? 'bg-cyan-500/10 border-cyan-500/30' : 'hover:bg-white/[0.03]'}`} style={{ marginLeft: `${paddingLeftValue}px` }}>
                 {depth > 0 && <div className="absolute -left-[14px] top-4 w-3 h-px bg-white/10"></div>}
-                
                 <div className="flex-shrink-0 pt-1 relative z-10">
-                    <UserAvatar user={{ id: comment.user_id, raw_user_meta_data: comment.raw_user_meta_data, email: comment.email }} size="sm" />
+                    <UserAvatar 
+                        user={{ 
+                            ...comment,
+                            id: comment.user_id, 
+                            profiles: profile,
+                            raw_user_meta_data: metadata, 
+                            avatar_url: avatarUrl,
+                            full_name: authorName
+                        }} 
+                        size="sm" 
+                    />
                 </div>
-                
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline mb-1">
-                        <span className="text-sm font-bold text-cyan-200">{comment.raw_user_meta_data?.full_name || "Anonymous"}</span>
+                        <span className="text-sm font-bold text-cyan-200">{authorName}</span>
                         <div className="flex items-center gap-2">
                             <span className="text-[10px] text-gray-600 font-mono">{formatTime(comment.created_at)}</span>
                             {currentUser && currentUser.id === comment.user_id && (
                                 <div className="relative">
-                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-600 hover:text-white transition opacity-0 group-hover:opacity-100"><MoreHorizontal size={14} /></button>
+                                    <button onClick={() => setShowMenu(!showMenu)} className="text-gray-600 hover:text-white transition opacity-0 group-hover:opacity-100">
+                                        <MoreHorizontal size={14} />
+                                    </button>
                                     {showMenu && (
                                         <>
                                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)}></div>
                                             <div className="absolute right-0 top-5 z-20 w-24 bg-[#1A1D26] border border-white/10 rounded-lg shadow-xl py-1">
-                                                <button onClick={() => onDelete(comment.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-white/5 text-left"><Trash2 size={12} /> Delete</button>
+                                                <button onClick={() => onDelete(comment.id)} className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-white/5 text-left">
+                                                    <Trash2 size={12} /> Delete
+                                                </button>
                                             </div>
                                         </>
                                     )}
@@ -115,26 +126,16 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                             )}
                         </div>
                     </div>
-                    
                     <p className="text-sm text-gray-300 leading-relaxed break-words font-light">{comment.content}</p>
-                    
                     <div className="flex items-center gap-4 mt-2">
-                        <button onClick={handleLikeComment} className={`text-xs font-medium flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400'}`}><Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes}</button>
+                        <button onClick={handleLikeComment} className={`text-xs font-medium flex items-center gap-1 transition-colors ${isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-400'}`}>
+                            <Heart size={12} fill={isLiked ? "currentColor" : "none"} /> {likes > 0 && likes}
+                        </button>
                         <button onClick={handleToggleReply} className="text-xs font-medium text-gray-500 hover:text-cyan-400 flex items-center gap-1 transition-colors">Reply</button>
                     </div>
-                    
                     {showReplyInput && currentUser && (
                         <div className="mt-3 flex gap-2 items-center animate-in fade-in slide-in-from-top-1">
-                            <input 
-                                type="text" 
-                                autoFocus 
-                                value={replyContent} 
-                                onChange={(e) => setReplyContent(e.target.value)} 
-                                placeholder="Write a reply..."
-                                className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500/50 transition-colors" 
-                                onKeyDown={(e) => e.key === 'Enter' && handleSendReply()}
-                                disabled={isSendingReply}
-                            />
+                            <input type="text" autoFocus value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="Write a reply..." className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500/50 transition-colors" onKeyDown={(e) => e.key === 'Enter' && handleSendReply()} disabled={isSendingReply} />
                             <button onClick={handleSendReply} disabled={!replyContent.trim() || isSendingReply} className="p-2 bg-cyan-600 rounded-lg text-black hover:bg-cyan-500 disabled:opacity-50 transition-colors">
                                 <CornerDownRight size={14} />
                             </button>
@@ -142,71 +143,97 @@ const CommentItem = memo(({ comment, allComments, currentUser, onDelete, onReply
                     )}
                 </div>
             </div>
-            {childComments.map(child => (
-                 <CommentItem key={child.id} comment={child} allComments={allComments} currentUser={currentUser} onDelete={onDelete} onReplySuccess={onReplySuccess} depth={depth + 1} highlightId={highlightId} />
-            ))}
+            {childComments.map(child => (<CommentItem key={child.id} comment={child} allComments={allComments} currentUser={currentUser} onDelete={onDelete} onReplySuccess={onReplySuccess} depth={depth + 1} highlightId={highlightId} />))}
         </div>
     );
 });
 
+
 // --- MAIN POST COMPONENT ---
 const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated }) => {
-    // 1. FIX: Kiểm tra an toàn, nếu không có post thì không render gì cả
-    if (!initialPost) return null;
-
-    const [postData, setPostData] = useState(initialPost); 
-    const [likes, setLikes] = useState(initialPost.like_count || 0); 
+    // HOOKS MUST BE AT TOP (BEFORE ANY RETURNS)
+    const [postData, setPostData] = useState(initialPost || {}); 
+    const [likes, setLikes] = useState(initialPost?.like_count || 0); 
     const [isLiked, setIsLiked] = useState(false);
     const [comments, setComments] = useState([]);
-    const [commentCount, setCommentCount] = useState(initialPost.comment_count || 0);
+    const [commentCount, setCommentCount] = useState(initialPost?.comment_count || 0);
     const [showComments, setShowComments] = useState(false);
     const [newComment, setNewComment] = useState("");
     const [loadingComments, setLoadingComments] = useState(false);
     const [isSendingComment, setIsSendingComment] = useState(false);
-
     const [deleteCommentModalOpen, setDeleteCommentModalOpen] = useState(false);
     const [commentToDelete, setCommentToDelete] = useState(null);
     const [showPostMenu, setShowPostMenu] = useState(false);
     const [deletePostModalOpen, setDeletePostModalOpen] = useState(false);
     const [isDeletingPost, setIsDeletingPost] = useState(false);
     const [isDeletingComment, setIsDeletingComment] = useState(false);
-
     const [isEditing, setIsEditing] = useState(false); 
-    const [editForm, setEditForm] = useState({ title: postData.title, content: postData.content }); 
+    const [editForm, setEditForm] = useState({ title: initialPost?.title || "", content: initialPost?.content || "" }); 
     const [isUpdatingPost, setIsUpdatingPost] = useState(false); 
-
     const [searchParams] = useSearchParams();
-    const highlightCommentId = searchParams.get('commentId');
+
+    // Move all hooks here
+    const fetchCommentsData = useCallback(async () => {
+        if (!postData?.id) return;
+        setLoadingComments(true);
+        const { data, error } = await supabase.from("comments_view").select("*, profiles(*)").eq("post_id", postData.id).order("created_at", { ascending: true });
+        if (!error && data) {
+            const formattedComments = data.map(cmt => {
+                const profile = Array.isArray(cmt.profiles) ? cmt.profiles[0] : (cmt.profiles || {});
+                const metadata = cmt.raw_user_meta_data || {};
+                const authorName = cmt.full_name || profile?.full_name || profile?.name || metadata.full_name || metadata.name || "Anonymous";
+                const avatarUrl = cmt.avatar_url || profile?.avatar_url || profile?.picture || profile?.avatar || metadata.avatar_url || metadata.picture || metadata.avatar;
+                
+                return { 
+                    ...cmt, 
+                    profiles: profile, // Giữ profile đầy đủ cho UserAvatar
+                    raw_user_meta_data: {
+                        ...metadata,
+                        ...profile, // Trộn profile vào metadata để UserAvatar dễ fallback
+                        full_name: authorName,
+                        avatar_url: avatarUrl
+                    },
+                    avatar_url: avatarUrl, 
+                    full_name: authorName
+                };
+            });
+            setComments(formattedComments);
+        }
+        setLoadingComments(false);
+    }, [postData?.id]);
 
     useEffect(() => {
-        if (!currentUser) return;
+        const ensureProfileData = async () => {
+            if (!postData?.id || !postData?.user_id) return;
+            const hasProfile = postData.profiles && (Array.isArray(postData.profiles) ? postData.profiles.length > 0 : !!postData.profiles.id);
+            if (!hasProfile) {
+                const { data, error } = await supabase.from('profiles').select('*').eq('id', postData.user_id).single();
+                if (data && !error) setPostData(prev => ({ ...prev, profiles: data }));
+            }
+        };
+        ensureProfileData();
+    }, [postData?.user_id, postData?.profiles, postData?.id]);
+
+    useEffect(() => {
+        if (!currentUser || !postData?.id) return;
         const checkLikeStatus = async () => {
             const { data } = await supabase.from("post_likes").select("user_id").eq("post_id", postData.id).eq("user_id", currentUser.id).maybeSingle();
             if (data) setIsLiked(true);
         };
         checkLikeStatus();
-    }, [currentUser?.id, postData.id]);
+    }, [currentUser, postData?.id]);
 
-    const fetchCommentsData = useCallback(async () => {
-        setLoadingComments(true);
-        const { data, error } = await supabase.from("comments_view").select("*").eq("post_id", postData.id).order("created_at", { ascending: true });
-        if (!error) setComments(data || []);
-        setLoadingComments(false);
-        return data || [];
-    }, [postData.id]);
-
+    const highlightCommentId = searchParams.get('commentId');
     useEffect(() => {
-        if (highlightCommentId) {
+        if (highlightCommentId && postData?.id) {
             setShowComments(true);
             const isCommentLoaded = comments.some(c => String(c.id) === String(highlightCommentId));
-            if (!isCommentLoaded) {
-                fetchCommentsData();
-            }
+            if (!isCommentLoaded) fetchCommentsData();
         }
-    }, [highlightCommentId, postData.id, comments, fetchCommentsData]);
+    }, [highlightCommentId, postData?.id, comments, fetchCommentsData]);
 
     const handleLike = useCallback(async () => {
-        if (!currentUser) return alert("Please log in.");
+        if (!currentUser || !postData?.id) return alert("Please log in.");
         if (isLiked) {
             setLikes(p => p - 1); setIsLiked(false);
             await supabase.from("post_likes").delete().eq("post_id", postData.id).eq("user_id", currentUser.id); 
@@ -214,106 +241,102 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
             setLikes(p => p + 1); setIsLiked(true);
             await supabase.from("post_likes").insert({ post_id: postData.id, user_id: currentUser.id }); 
         }
-    }, [isLiked, currentUser, postData.id]); 
+    }, [isLiked, currentUser, postData?.id]); 
 
     const toggleComments = useCallback(async () => {
-        if (!showComments && comments.length === 0) {
-            await fetchCommentsData();
-        }
+        if (!showComments && comments.length === 0) await fetchCommentsData();
         setShowComments(prev => !prev);
     }, [showComments, comments.length, fetchCommentsData]);
 
     const handleSendComment = useCallback(async () => {
-        if (!currentUser) return alert("Please log in.");
+        if (!currentUser || !postData?.id) return alert("Please log in.");
         if (!newComment.trim()) return;
-        
         setIsSendingComment(true); 
-
-        const { data, error } = await supabase.from("post_comments").insert({ 
-            post_id: postData.id, user_id: currentUser.id, content: newComment, parent_id: null 
-        }).select("*").single();
-
+        const { data, error } = await supabase.from("post_comments").insert({ post_id: postData.id, user_id: currentUser.id, content: newComment, parent_id: null }).select("*, profiles(*)").single();
         if (!error && data) {
-            const optimistic = { ...data, email: currentUser.email, raw_user_meta_data: currentUser.user_metadata || currentUser.raw_user_meta_data };
-            setComments(prev => [...prev, optimistic]);
-            setNewComment("");
-            setCommentCount(p => p + 1);
-        } else {
-             alert("Error sending comment: " + error?.message);
-        }
-        
+            const userMeta = currentUser.user_metadata || currentUser.raw_user_meta_data || {};
+            const optimistic = { 
+                ...data, 
+                email: currentUser.email, 
+                raw_user_meta_data: userMeta, 
+                profiles: data.profiles || { 
+                    full_name: userMeta.full_name, 
+                    avatar_url: userMeta.avatar_url || userMeta.picture 
+                },
+                avatar_url: userMeta.avatar_url || userMeta.picture,
+                full_name: userMeta.full_name
+            };
+            setComments(prev => [...prev, optimistic]); setNewComment(""); setCommentCount(p => p + 1);
+        } else { alert("Error sending comment: " + error?.message); }
         setIsSendingComment(false); 
-    }, [currentUser, newComment, postData.id]); 
+    }, [currentUser, newComment, postData?.id]); 
 
-    const handleReplySuccess = useCallback((newReply) => {
-        setComments(prev => [...prev, newReply]);
-        setCommentCount(p => p + 1);
-    }, []);
-
-    const requestDeleteComment = useCallback((id) => {
-        setCommentToDelete(id);
-        setDeleteCommentModalOpen(true);
-    }, []);
-
+    const handleReplySuccess = useCallback((newReply) => { setComments(prev => [...prev, newReply]); setCommentCount(p => p + 1); }, []);
+    const requestDeleteComment = useCallback((id) => { setCommentToDelete(id); setDeleteCommentModalOpen(true); }, []);
     const executeDeleteComment = useCallback(async () => {
         if (!commentToDelete) return;
         setIsDeletingComment(true);
         const { error } = await supabase.from("post_comments").delete().eq("id", commentToDelete);
-        if (!error) {
-            setComments(prev => prev.filter(c => c.id !== commentToDelete && c.parent_id !== commentToDelete));
-            setCommentCount(p => Math.max(0, p - 1));
-            setDeleteCommentModalOpen(false);
-        }
+        if (!error) { setComments(prev => prev.filter(c => c.id !== commentToDelete && c.parent_id !== commentToDelete)); setCommentCount(p => Math.max(0, p - 1)); setDeleteCommentModalOpen(false); }
         setIsDeletingComment(false);
     }, [commentToDelete]);
+
+    // --- EARLY RETURN ---
+    if (!initialPost) return null;
+
+    // --- HELPERS AND RENDER LOGIC ---
+    const getProfile = () => {
+        return Array.isArray(postData.profiles) ? postData.profiles[0] : postData.profiles;
+    };
+
+    const getAvatarUrl = () => {
+        const profile = getProfile();
+        const metadata = postData.raw_user_meta_data || {};
+        return postData.avatar_url || profile?.avatar_url || metadata.avatar_url || metadata.picture;
+    };
+
+    const getAuthorName = () => {
+        const profile = getProfile();
+        const metadata = postData.raw_user_meta_data || {};
+        return postData.full_name || profile?.full_name || metadata.full_name || 'Anonymous';
+    };
 
     const executeDeletePost = async () => {
         setIsDeletingPost(true);
         const { error } = await supabase.from("community_posts").delete().eq("id", postData.id); 
-        if (!error) {
-            setDeletePostModalOpen(false);
-            if (onPostDeleted) onPostDeleted(postData.id); 
-        } else {
-            alert("Error deleting post: " + error.message);
-        }
+        if (!error) { setDeletePostModalOpen(false); if (onPostDeleted) onPostDeleted(postData.id); } else { alert("Error deleting post: " + error.message); }
         setIsDeletingPost(false);
     };
-
     const executeEditPost = async () => {
         if (!editForm.title.trim() || !editForm.content.trim()) return;
         setIsUpdatingPost(true);
-
-        const { data, error } = await supabase.from("community_posts")
-            .update({ title: editForm.title, content: editForm.content })
-            .eq("id", postData.id) 
-            .select("*"); 
-
+        const { data, error } = await supabase.from("community_posts").update({ title: editForm.title, content: editForm.content }).eq("id", postData.id).select("*, profiles(*)"); 
         setIsUpdatingPost(false);
-
         if (!error && data && data.length > 0) {
             const updatedPostData = data[0]; 
-            setPostData(prev => ({ 
-                ...prev, 
-                title: updatedPostData.title, 
-                content: updatedPostData.content, 
-                updated_at: updatedPostData.updated_at || prev.updated_at,
-            }));
-            if (onPostUpdated) onPostUpdated(updatedPostData);
-            setIsEditing(false);
-        } else {
-            alert("Error updating post.");
-        }
+            setPostData(prev => ({ ...prev, title: updatedPostData.title, content: updatedPostData.content, updated_at: updatedPostData.updated_at || prev.updated_at, profiles: updatedPostData.profiles || prev.profiles }));
+            if (onPostUpdated) onPostUpdated(updatedPostData); setIsEditing(false);
+        } else { alert("Error updating post."); }
     };
-    
     const rootComments = comments.filter(c => !c.parent_id);
 
     return (
         <div className="bg-[#0B0D14] border border-white/10 p-6 md:p-8 rounded-3xl shadow-lg hover:border-cyan-500/20 hover:shadow-[0_0_30px_-10px_rgba(6,182,212,0.1)] transition-all duration-300 relative group overflow-hidden">
-            
             {/* Header Post */}
             <div className="flex items-start gap-4 z-10 relative">
                 <div className="flex-shrink-0 mt-1">
-                    <UserAvatar user={{ id: postData.user_id, raw_user_meta_data: postData.raw_user_meta_data, email: postData.email }} size="md" />
+                    {/* --- FIX QUAN TRỌNG: TRUYỀN PROPS CHÍNH XÁC --- */}
+                    <UserAvatar 
+            user={{ 
+                id: postData.user_id, 
+                // Sử dụng hàm getAvatarUrl() bạn đã viết sẵn ở trên để xử lý logic lấy ảnh
+                avatar_url: getAvatarUrl(),
+                // Fallback metadata nếu cần
+                raw_user_meta_data: postData.raw_user_meta_data,
+                full_name: getAuthorName()
+            }} 
+            size="lg" 
+        />
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
@@ -322,42 +345,13 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                                 <Link to={`/community/post/${postData.id}`}>{postData.title}</Link>
                             </h3>
                             <div className="flex items-center gap-2 text-gray-500 text-xs">
-                                <span className="text-cyan-300 font-medium hover:underline cursor-pointer">{postData.raw_user_meta_data?.full_name || 'Anonymous'}</span>
+                                <span className="text-cyan-300 font-medium hover:underline cursor-pointer">{getAuthorName()}</span>
                                 <span className="w-1 h-1 rounded-full bg-gray-600"></span>
                                 <span className="font-mono">{formatTime(postData.created_at)}</span>
-                                {postData.updated_at && postData.updated_at !== postData.created_at && (
-                                    <span className="italic opacity-60 ml-1">(edited)</span>
-                                )}
+                                {postData.updated_at && postData.updated_at !== postData.created_at && (<span className="italic opacity-60 ml-1">(edited)</span>)}
                             </div>
                         </div>
-                        {currentUser && currentUser.id === postData.user_id && (
-                            <div className="relative ml-2">
-                                <button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/10 transition">
-                                    <MoreHorizontal size={20} />
-                                </button>
-                                {showPostMenu && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setShowPostMenu(false)}></div>
-                                        <div className="absolute right-0 top-10 z-20 w-40 bg-[#1A1D26] border border-white/10 rounded-xl shadow-2xl py-1 animate-in fade-in zoom-in duration-100">
-                                            <button 
-                                                onClick={() => {
-                                                    setEditForm({ title: postData.title, content: postData.content });
-                                                    setIsEditing(true); 
-                                                    setShowPostMenu(false); 
-                                                }} 
-                                                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-cyan-400 hover:bg-white/5 text-left font-medium">
-                                                <EditIcon size={14} /> Edit Post
-                                            </button>
-                                            <button 
-                                                onClick={() => setDeletePostModalOpen(true)} 
-                                                className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 text-left font-medium">
-                                                <Trash2 size={14} /> Delete Post
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
+                        {currentUser && currentUser.id === postData.user_id && (<div className="relative ml-2"><button onClick={() => setShowPostMenu(!showPostMenu)} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/10 transition"><MoreHorizontal size={20} /></button>{showPostMenu && (<><div className="fixed inset-0 z-10" onClick={() => setShowPostMenu(false)}></div><div className="absolute right-0 top-10 z-20 w-40 bg-[#1A1D26] border border-white/10 rounded-xl shadow-2xl py-1 animate-in fade-in zoom-in duration-100"><button onClick={() => { setEditForm({ title: postData.title, content: postData.content }); setIsEditing(true); setShowPostMenu(false); }} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-cyan-400 hover:bg-white/5 text-left font-medium"><EditIcon size={14} /> Edit Post</button><button onClick={() => setDeletePostModalOpen(true)} className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-400 hover:bg-white/5 text-left font-medium"><Trash2 size={14} /> Delete Post</button></div></>)}</div>)}
                     </div>
                     <p className="text-gray-300 mt-4 whitespace-pre-line leading-relaxed break-words font-light text-base md:text-lg">{postData.content}</p>
                 </div>
@@ -366,16 +360,10 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
             {/* Footer Actions */}
             <div className="flex items-center justify-between mt-6 pl-[3.5rem] relative z-10">
                 <div className="flex items-center gap-2">
-                    <button onClick={handleLike} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${isLiked ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}>
-                        <Heart size={18} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span>
-                    </button>
-                    <button onClick={toggleComments} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${showComments ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}>
-                        <MessageCircle size={18} /><span>{commentCount}</span>
-                    </button>
+                    <button onClick={handleLike} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${isLiked ? "text-red-500 bg-red-500/10 border-red-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}><Heart size={18} fill={isLiked ? "currentColor" : "none"} /><span>{likes}</span></button>
+                    <button onClick={toggleComments} className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-medium text-sm border ${showComments ? "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" : "text-gray-400 border-transparent hover:bg-white/5 hover:text-white"}`}><MessageCircle size={18} /><span>{commentCount}</span></button>
                 </div>
-                <button className="p-2 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
-                    <Share2 size={18} />
-                </button>
+                <button className="p-2 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5"><Share2 size={18} /></button>
             </div>
 
             {/* Comment Section */}
@@ -383,48 +371,22 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
                 <div className="mt-6 bg-black/20 rounded-2xl p-5 ml-0 sm:ml-[3.5rem] border border-white/5 relative z-10">
                     {currentUser ? (
                         <div className="flex gap-3 items-start mb-6">
-                            <UserAvatar user={{ ...currentUser, id: currentUser.id }} size="sm" />
+                            <UserAvatar user={{ ...currentUser, id: currentUser.id, avatar_url: currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture }} size="md" />
                             <div className="flex-1 relative group-focus-within:ring-1 ring-cyan-500/50 rounded-xl transition-all">
-                                <input 
-                                    type="text" 
-                                    value={newComment} 
-                                    onChange={(e) => setNewComment(e.target.value)} 
-                                    placeholder="Write a thoughtful comment..." 
-                                    className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 focus:bg-[#0B0D14] transition-all placeholder-gray-600" 
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSendComment()} 
-                                    disabled={isSendingComment}
-                                />
-                                <button 
-                                    onClick={handleSendComment} 
-                                    disabled={!newComment.trim() || isSendingComment} 
-                                    className="absolute right-2 top-2 p-1.5 bg-cyan-600 rounded-lg text-black hover:bg-cyan-500 disabled:opacity-50 disabled:hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20"
-                                >
-                                    <Send size={16} />
-                                </button>
+                                <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Write a thoughtful comment..." className="w-full bg-[#05050A] border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-white text-sm focus:outline-none focus:border-cyan-500/50 focus:bg-[#0B0D14] transition-all placeholder-gray-600" onKeyDown={(e) => e.key === 'Enter' && handleSendComment()} disabled={isSendingComment} />
+                                <button onClick={handleSendComment} disabled={!newComment.trim() || isSendingComment} className="absolute right-2 top-2 p-1.5 bg-cyan-600 rounded-lg text-black hover:bg-cyan-500 disabled:opacity-50 disabled:hover:bg-cyan-600 transition-colors shadow-lg shadow-cyan-500/20"><Send size={16} /></button>
                             </div>
                         </div>
                     ) : (
                         <div className="p-4 bg-white/5 rounded-xl text-center mb-6 border border-dashed border-white/10">
-                            <p className="text-sm text-gray-400">
-                                Want to discuss? <Link to="/signin" className="text-cyan-400 font-bold hover:underline">Log in</Link> to join.
-                            </p>
+                            <p className="text-sm text-gray-400">Want to discuss? <Link to="/signin" className="text-cyan-400 font-bold hover:underline">Log in</Link> to join.</p>
                         </div>
                     )}
-
                     <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
-                        {loadingComments ? (
-                            <div className="flex justify-center py-6"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>
-                        ) : rootComments.length === 0 ? (
-                            <p className="text-sm text-gray-500 italic text-center py-6">No comments yet. Start the conversation!</p>
-                        ) : (
-                            rootComments.map((cmt) => (
-                                <CommentItem key={cmt.id} comment={cmt} allComments={comments} currentUser={currentUser} onDelete={requestDeleteComment} onReplySuccess={handleReplySuccess} depth={0} highlightId={highlightCommentId} />
-                            ))
-                        )}
+                        {loadingComments ? (<div className="flex justify-center py-6"><div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div></div>) : rootComments.length === 0 ? (<p className="text-sm text-gray-500 italic text-center py-6">No comments yet. Start the conversation!</p>) : (rootComments.map((cmt) => (<CommentItem key={cmt.id} comment={cmt} allComments={comments} currentUser={currentUser} onDelete={requestDeleteComment} onReplySuccess={handleReplySuccess} depth={0} highlightId={highlightCommentId} />)))}
                     </div>
                 </div>
             )}
-
             <DeleteConfirmModal isOpen={deleteCommentModalOpen} onClose={() => setDeleteCommentModalOpen(false)} onConfirm={executeDeleteComment} isDeleting={isDeletingComment} title="Delete Comment?" message="Are you sure?" />
             <DeleteConfirmModal isOpen={deletePostModalOpen} onClose={() => setDeletePostModalOpen(false)} onConfirm={executeDeletePost} isDeleting={isDeletingPost} title="Delete Post?" message="Are you sure?" />
             <PostFormModal show={isEditing} onClose={() => setIsEditing(false)} onSubmit={executeEditPost} form={editForm} setForm={setEditForm} loading={isUpdatingPost} currentUser={currentUser} isEdit={true} />
@@ -432,7 +394,6 @@ const PostItem = ({ post: initialPost, currentUser, onPostDeleted, onPostUpdated
     );
 };
 
-// 2. FIX: Sử dụng optional chaining để tránh lỗi so sánh undefined
 export default memo(PostItem, (prev, next) => {
     return (
         prev.post?.id === next.post?.id &&
