@@ -195,7 +195,7 @@ const Header = ({ user }) => {
                 
                 {/* Logo Area */}
                 <div className="flex lg:flex-1">
-                    <Link to="/" className="-m-1.5 p-1.5 group flex items-center gap-2">
+                    <Link to={user ? "/dashboard" : "/"} className="-m-1.5 p-1.5 group flex items-center gap-2">
                         {/* Logo Style giống Dashboard */}
                         <span className="text-2xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 group-hover:to-white transition-all duration-300">
                             HYPER<span className="text-cyan-400">X</span>
@@ -365,7 +365,6 @@ const Header = ({ user }) => {
 >
     <UserIcon className="w-4.5 h-4.5 text-gray-500" /> Profile
 </Link>
-                                            {/* Link tới Dashboard */}
                                             <Link to="/dashboard" className="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg gap-3 transition-colors" onClick={() => setDropdownOpen(false)}>
                                                 <ArrowRightOnRectangleIcon className="w-4.5 h-4.5 text-gray-500 -rotate-90" /> Dashboard
                                             </Link>

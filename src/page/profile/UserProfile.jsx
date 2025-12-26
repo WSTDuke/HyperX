@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "../../routes/supabaseClient";
 import UserAvatar from "../../components/UserAvatar";
 import PostItem from "../community/PostItem";
 import { 
     Calendar, Mail, Edit3, 
-    Grid, Activity, UserX, Package, ChevronRight, ArrowLeft, UserPlus, UserCheck 
+    Grid, Activity, UserX, Package, ChevronRight, ArrowLeft, UserPlus, UserCheck,
+    ShieldAlert, XCircle, Loader2
 } from "lucide-react";
 
 const UserProfile = () => {
@@ -25,130 +26,170 @@ const UserProfile = () => {
     // State Tab
     const [activeTab, setActiveTab] = useState('all'); 
     const [selectedPostId, setSelectedPostId] = useState(null);
+    const [isFollowModalOpen, setIsFollowModalOpen] = useState(false);
+    const followActionInProgress = useRef(false);
 
     const [stats, setStats] = useState({ 
         postCount: 0, likeCount: 0, productCount: 0, followerCount: 0, followingCount: 0 
     });
+
+    // Lists for Followers/Following
+    const [followers, setFollowers] = useState([]);
+    const [following, setFollowing] = useState([]);
 
     const formatCurrency = (amount) => {
         if (amount === 0 || amount === undefined) return "Free";
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true);
-            
-            const { data: { user } } = await supabase.auth.getUser();
-            setCurrentUser(user);
-            const targetUserId = id || user?.id;
+    const fetchData = useCallback(async (silent = false) => {
+        if (!silent) setIsLoading(true);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(user);
+        const targetUserId = id || user?.id;
 
-            if (!targetUserId) {
-                setIsLoading(false);
-                return;
+        if (!targetUserId) {
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            // 1. Fetch Profile
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', targetUserId)
+                .single();
+            
+            if (profileError) throw profileError;
+            
+            let updatedProfile = { ...profileData };
+
+            // --- LOGIC: TỰ ĐỘNG ĐỒNG BỘ NẾU TRỐNG (SYNC ON VIEW) ---
+            if (user && user.id === targetUserId) {
+                const metadata = user.user_metadata || {};
+                const needsSync = !profileData.avatar_url || !profileData.full_name;
+
+                if (needsSync) {
+                    const syncData = {
+                        full_name: profileData.full_name || metadata.full_name || metadata.name,
+                        avatar_url: profileData.avatar_url || metadata.avatar_url || metadata.picture
+                    };
+
+                    // Cập nhật database dùng upsert để đảm bảo row tồn tại
+                    const { error: syncError } = await supabase.from('profiles').upsert({ 
+                        id: user.id,
+                        ...syncData
+                    });
+                    
+                    if (syncError) console.error("Auto-sync profile failed:", syncError);
+                    
+                    // Cập nhật state local để hiển thị ngay
+                    updatedProfile = { ...updatedProfile, ...syncData };
+                }
             }
 
-            try {
-                // 1. Fetch Profile
-                const { data: profileData, error: profileError } = await supabase
+            const [
+                { data: postsData, error: postsError }, 
+                { data: followersData, error: followersError, count: followerCount }, 
+                { data: followingData, error: followingError, count: followingCount },
+                { data: productsData, error: productsError }
+            ] = await Promise.all([
+                supabase.from('community_posts')
+                    .select('*, profiles(*)')
+                    .eq('user_id', targetUserId)
+                    .order('created_at', { ascending: false }),
+                supabase.from('follows')
+                    .select('follower_id', { count: 'exact' })
+                    .eq('following_id', targetUserId),
+                supabase.from('follows')
+                    .select('following_id', { count: 'exact' })
+                    .eq('follower_id', targetUserId),
+                supabase.from('products').select('*').eq('user_id', targetUserId).order('created_at', { ascending: false })
+            ]);
+
+            if (postsError) throw postsError;
+            if (followersError) console.error("Followers fetch error:", followersError);
+            if (followingError) console.error("Following fetch error:", followingError);
+            if (productsError) console.error("Error fetching products:", productsError);
+
+            setProfile(updatedProfile);
+            setProducts(productsData || []);
+
+            // FETCH PROFILE DETAILS (No-Join Fallback for Missing Foreign Keys)
+            const fetchProfileDetails = async (idList, idField) => {
+                if (!idList || idList.length === 0) return [];
+                const ids = idList.map(item => item[idField]).filter(Boolean);
+                if (ids.length === 0) return [];
+                
+                const { data, error } = await supabase
                     .from('profiles')
                     .select('*')
-                    .eq('id', targetUserId)
-                    .single();
+                    .in('id', ids);
                 
-                if (profileError) throw profileError;
+                if (error) {
+                    console.error("Error fetching detailed profiles:", error);
+                    return ids.map(id => ({ id, full_name: "Private User" }));
+                }
                 
-                let updatedProfile = { ...profileData };
+                // Map back to ensure order or handle missing
+                return ids.map(id => data.find(p => p.id === id) || { id, full_name: "Private User" });
+            };
 
-                // --- LOGIC: TỰ ĐỘNG ĐỒNG BỘ NẾU TRỐNG (SYNC ON VIEW) ---
-                if (user && user.id === targetUserId) {
-                    const metadata = user.user_metadata || {};
-                    const needsSync = !profileData.avatar_url || !profileData.full_name;
+            const [followerProfiles, followingProfiles] = await Promise.all([
+                fetchProfileDetails(followersData, 'follower_id'),
+                fetchProfileDetails(followingData, 'following_id')
+            ]);
 
-                    if (needsSync) {
-                        const syncData = {
-                            full_name: profileData.full_name || metadata.full_name || metadata.name,
-                            avatar_url: profileData.avatar_url || metadata.avatar_url || metadata.picture
-                        };
+            setFollowers(followerProfiles);
+            setFollowing(followingProfiles);
 
-                        // Cập nhật database dùng upsert để đảm bảo row tồn tại
-                        const { error: syncError } = await supabase.from('profiles').upsert({ 
-                            id: user.id,
-                            ...syncData
-                        });
-                        
-                        if (syncError) console.error("Auto-sync profile failed:", syncError);
-                        
-                        // Cập nhật state local để hiển thị ngay
-                        updatedProfile = { ...updatedProfile, ...syncData };
-                    }
-                }
+            // FIX ẢNH POSTS
+            const formattedPosts = postsData.map(post => {
+                const profileInfo = post.profiles || {};
+                const metadata = post.raw_user_meta_data || {};
+                return {
+                    ...post,
+                    raw_user_meta_data: { 
+                        ...metadata,
+                        full_name: post.full_name || profileInfo.full_name || metadata.full_name || profileInfo.name || metadata.name, 
+                        avatar_url: post.avatar_url || profileInfo.avatar_url || profileInfo.picture || metadata.avatar_url || metadata.picture
+                    },
+                    email: post.email || profileInfo.email
+                };
+            });
+            setPosts(formattedPosts);
 
-  
-                const [
-                    { data: postsData, error: postsError }, 
-                    { count: followerCount }, 
-                    { count: followingCount },
-                    { data: productsData, error: productsError } 
-                ] = await Promise.all([
-                    supabase.from('community_posts')
-                        .select('*, profiles(*)')
-                        .eq('user_id', targetUserId)
-                        .order('created_at', { ascending: false }),
-                    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId),
-                    supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId),
-                    supabase.from('products').select('*').eq('user_id', targetUserId).order('created_at', { ascending: false }) 
-                ]);
+            setStats({
+                postCount: postsData.length,
+                likeCount: formattedPosts.reduce((acc, curr) => acc + (curr.like_count || 0), 0),
+                productCount: productsData?.length || 0,
+                followerCount: followerCount || 0,
+                followingCount: followingCount || 0
+            });
 
-                if (postsError) throw postsError;
-                if (productsError) console.error("Error fetching products:", productsError);
-
-                setProfile(updatedProfile);
-                setProducts(productsData || []);
-
-                // FIX ẢNH POSTS: Giữ nguyên avatar_url thô cho PostItem / UserAvatar xử lý
-                const formattedPosts = postsData.map(post => {
-                    const profileInfo = post.profiles || {};
-                    const metadata = post.raw_user_meta_data || {};
-                    return {
-                        ...post,
-                        raw_user_meta_data: { 
-                            ...metadata,
-                            full_name: post.full_name || profileInfo.full_name || metadata.full_name || profileInfo.name || metadata.name, 
-                            avatar_url: post.avatar_url || profileInfo.avatar_url || profileInfo.picture || metadata.avatar_url || metadata.picture
-                        },
-                        email: post.email || profileInfo.email
-                    };
-                });
-                setPosts(formattedPosts);
-
-                setStats({
-                    postCount: postsData.length,
-                    likeCount: formattedPosts.reduce((acc, curr) => acc + (curr.like_count || 0), 0),
-                    productCount: productsData?.length || 0,
-                    followerCount: followerCount || 0,
-                    followingCount: followingCount || 0
-                });
-
-                // Check Follow Status
-                if (user && user.id !== targetUserId) {
-                    const { data: followData } = await supabase
-                        .from('follows')
-                        .select('follower_id')
-                        .eq('follower_id', user.id)
-                        .eq('following_id', targetUserId)
-                        .maybeSingle();
-                    setIsFollowing(!!followData);
-                }
-
-            } catch (error) {
-                console.error("Error fetching profile:", error);
-            } finally {
-                setIsLoading(false);
+            // Check Follow Status
+            if (user && user.id !== targetUserId) {
+                const { data: followData } = await supabase
+                    .from('follows')
+                    .select('follower_id')
+                    .eq('follower_id', user.id)
+                    .eq('following_id', targetUserId)
+                    .maybeSingle();
+                setIsFollowing(!!followData);
             }
-        };
-        fetchData();
+
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, [id]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handlePostUpdated = (updatedPost) => setPosts(prev => prev.map(p => p.id === updatedPost.id ? { ...p, ...updatedPost } : p));
     const handlePostDeleted = (deletedPostId) => {
@@ -159,29 +200,54 @@ const UserProfile = () => {
 
     const handleFollowToggle = async () => {
         if (!currentUser) return alert("Please log in to follow.");
-        if (isUpdatingFollow) return;
-        setIsUpdatingFollow(true);
-        const prevFollow = isFollowing;
+        if (followActionInProgress.current) return;
+
+        // If already following, open management modal instead of immediate unfollow
+        if (isFollowing) {
+            setIsFollowModalOpen(true);
+            return;
+        }
+
+        await executeFollowAction(false); // Perform follow
+    };
+
+    const executeFollowAction = async (isUnfollow) => {
+        if (followActionInProgress.current) return;
+        followActionInProgress.current = true;
         
-        setIsFollowing(!prevFollow);
+        setIsUpdatingFollow(true);
+        if (isFollowModalOpen) setIsFollowModalOpen(false);
+
+        const prevFollow = isFollowing;
+        const newFollowState = !prevFollow;
+        
+        setIsFollowing(newFollowState);
         setStats(prev => ({ ...prev, followerCount: prevFollow ? prev.followerCount - 1 : prev.followerCount + 1 }));
 
         try {
-            if (prevFollow) {
+            if (isUnfollow) {
                 await supabase.from('follows').delete().eq('follower_id', currentUser.id).eq('following_id', profile.id);
             } else {
                 await supabase.from('follows').insert({ follower_id: currentUser.id, following_id: profile.id });
             }
+            fetchData(true);
         } catch (error) {
             console.error("Follow error:", error);
             setIsFollowing(prevFollow);
             setStats(prev => ({ ...prev, followerCount: prevFollow ? prev.followerCount + 1 : prev.followerCount - 1 }));
         } finally {
-            setIsUpdatingFollow(false);
+            // Force disable for 1.5s to prevent rapid spam and ensure sync
+            setTimeout(() => {
+                setIsUpdatingFollow(false);
+                followActionInProgress.current = false;
+            }, 1500);
         }
     };
 
-    const handleTabChange = (tab) => setActiveTab(prev => prev === tab ? 'all' : tab);
+    const handleTabChange = (tab) => {
+        setActiveTab(prev => prev === tab ? 'all' : tab);
+        window.scrollTo({ top: 400, behavior: 'smooth' }); // Scroll to content area
+    };
 
     // --- RENDER ---
     if (isLoading) return (
@@ -282,12 +348,16 @@ const UserProfile = () => {
                                     <button 
                                         onClick={handleFollowToggle}
                                         disabled={isUpdatingFollow}
-                                        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg active:scale-95
+                                        className={`flex items-center gap-2 px-8 py-2.5 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed
                                         ${isFollowing 
                                             ? 'bg-white/5 border border-white/10 text-gray-300 hover:text-red-400 hover:border-red-500/30' 
                                             : 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:brightness-110 shadow-cyan-500/20'}`}
                                     >
-                                        {isFollowing ? <><UserCheck size={18} /> Following</> : <><UserPlus size={18} /> Follow</>}
+                                        {isUpdatingFollow ? (
+                                            <><Loader2 size={18} className="animate-spin" /> Waiting...</>
+                                        ) : (
+                                            isFollowing ? <><UserCheck size={18} /> Following</> : <><UserPlus size={18} /> Follow</>
+                                        )}
                                     </button>
                                 )}
                             </div>
@@ -303,14 +373,81 @@ const UserProfile = () => {
                                 label="Posts" value={stats.postCount} icon={<Grid />} color="text-blue-400" 
                                 onClick={() => handleTabChange('posts')} active={activeTab === 'posts'} 
                             />
-                            <StatCard label="Followers" value={stats.followerCount} icon={<UserPlus />} color="text-pink-400" />
-                            <StatCard label="Following" value={stats.followingCount} icon={<UserCheck />} color="text-cyan-400" />
+                            <StatCard 
+                                label="Followers" value={stats.followerCount} icon={<UserPlus />} color="text-pink-400" 
+                                onClick={() => handleTabChange('followers')} active={activeTab === 'followers'} 
+                            />
+                            <StatCard 
+                                label="Following" value={stats.followingCount} icon={<UserCheck />} color="text-cyan-400" 
+                                onClick={() => handleTabChange('following')} active={activeTab === 'following'} 
+                            />
                         </div>
                     </div>
                 </div>
 
                 {/* --- CONTENT SECTION --- */}
                 <div className="mt-12 min-h-[500px]">
+
+                    {/* 0. FOLLOWERS/FOLLOWING LIST VIEW */}
+                    {(activeTab === 'followers' || activeTab === 'following') && (
+                        <div className="animate-in fade-in slide-in-from-bottom-6 duration-500">
+                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 px-1">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${activeTab === 'followers' ? 'bg-pink-500/10 text-pink-400' : 'bg-cyan-500/10 text-cyan-400'}`}>
+                                        {activeTab === 'followers' ? <UserPlus size={22} /> : <UserCheck size={22} />}
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-white capitalize">{activeTab}</h2>
+                                    <span className="text-sm font-mono text-gray-500 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                                        {activeTab === 'followers' ? followers.length : following.length}
+                                    </span>
+                                </div>
+
+                                <button 
+                                    onClick={() => setActiveTab('all')}
+                                    className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-white transition-colors group bg-white/5 px-4 py-2 rounded-xl border border-white/5 hover:border-white/20"
+                                >
+                                    <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                                    Back to Overview
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {(activeTab === 'followers' ? followers : following).length > 0 ? (
+                                    (activeTab === 'followers' ? followers : following).map(u => (
+                                        <Link 
+                                            key={u.id} 
+                                            to={`/profile/${u.id}`}
+                                            className="group flex items-center gap-4 p-4 bg-[#0B0D14] border border-white/5 rounded-2xl hover:border-cyan-500/30 hover:bg-white/[0.02] transition-all"
+                                        >
+                                            <UserAvatar 
+                                                user={{ 
+                                                    ...u, 
+                                                    raw_user_meta_data: { 
+                                                        avatar_url: u.avatar_url, 
+                                                        full_name: u.full_name 
+                                                    } 
+                                                }} 
+                                                size="md" 
+                                                className="w-12 h-12" 
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-white font-bold truncate group-hover:text-cyan-400 transition-colors uppercase text-sm tracking-tighter">
+                                                    {u.full_name || "Unknown"}
+                                                </h3>
+                                                <p className="text-gray-500 text-xs truncate">Joined {new Date(u.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <ChevronRight size={16} className="text-gray-700 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
+                                        </Link>
+                                    ))
+                                ) : (
+                                    <div className="col-span-full flex flex-col items-center justify-center py-20 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-3xl">
+                                        <UserX size={40} className="text-gray-600 mb-4" />
+                                        <p className="text-gray-500">No users found in this list.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* 1. PROJECTS TAB (Hiển thị list Project) */}
                     {(activeTab === 'all' || activeTab === 'products') && products.length > 0 && (
@@ -328,7 +465,14 @@ const UserProfile = () => {
                             </div>
                             
                             <div className={activeTab === 'all' ? "flex gap-5 overflow-x-auto pb-6 -mx-4 px-4 custom-scrollbar" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"}>
-                                {products.map(item => <ProductCard key={item.id} item={item} formatCurrency={formatCurrency} />)}
+                                {products.map(item => (
+                                    <ProductCard 
+                                        key={item.id} 
+                                        item={item} 
+                                        formatCurrency={formatCurrency} 
+                                        isSlider={activeTab === 'all'} 
+                                    />
+                                ))}
                             </div>
                         </div>
                     )}
@@ -360,6 +504,65 @@ const UserProfile = () => {
                     )}
                 </div>
             </div>
+
+            {/* --- FOLLOW MANAGEMENT MODAL --- */}
+            {isFollowModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsFollowModalOpen(false)} />
+                    
+                    <div className="relative w-full max-w-sm bg-[#0A0C12] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+                        {/* Header */}
+                        <div className="p-6 text-center border-b border-white/5">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden ring-2 ring-cyan-500/20">
+                                <UserAvatar user={{ ...profile, raw_user_meta_data: { avatar_url: profile.avatar_url, full_name: profile.full_name } }} size="lg" className="w-full h-full" />
+                            </div>
+                            <h3 className="text-white font-bold text-lg">{profile.full_name}</h3>
+                            <p className="text-gray-500 text-sm">@{profile.full_name?.toLowerCase().replace(/\s+/g, '')}</p>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="p-2">
+                            <button 
+                                onClick={() => {
+                                    alert("Restrict functionality coming soon!");
+                                    setIsFollowModalOpen(false);
+                                }}
+                                className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-colors group"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-orange-500/10 text-orange-400">
+                                        <ShieldAlert size={20} />
+                                    </div>
+                                    <span className="text-white font-semibold">Restrict</span>
+                                </div>
+                                <ChevronRight size={16} className="text-gray-600 group-hover:translate-x-1 transition-transform" />
+                            </button>
+
+                            <button 
+                                onClick={() => executeFollowAction(true)}
+                                disabled={isUpdatingFollow}
+                                className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-red-500/10 transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-red-500/20 text-red-500">
+                                        {isUpdatingFollow ? <Loader2 size={20} className="animate-spin" /> : <XCircle size={20} />}
+                                    </div>
+                                    <span className="text-red-500 font-semibold">{isUpdatingFollow ? "Unfollowing..." : "Unfollow"}</span>
+                                </div>
+                                {!isUpdatingFollow && <ChevronRight size={16} className="text-gray-600 group-hover:translate-x-1 transition-transform" />}
+                            </button>
+                        </div>
+
+                        {/* Footer / Cancel */}
+                        <button 
+                            onClick={() => setIsFollowModalOpen(false)}
+                            className="w-full p-4 text-gray-500 hover:text-white font-bold text-sm border-t border-white/5 transition-colors uppercase tracking-widest"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -384,8 +587,11 @@ const StatCard = ({ label, value, icon, color, active, onClick }) => (
 );
 
 // --- PRODUCT CARD ---
-const ProductCard = ({ item, formatCurrency }) => (
-    <Link to={`/product/${item.id}`} className="group relative flex-shrink-0 block w-[280px] sm:w-full h-full">
+const ProductCard = ({ item, formatCurrency, isSlider }) => (
+    <Link 
+        to={`/product/${item.id}`} 
+        className={`group relative flex-shrink-0 block h-full ${isSlider ? 'w-[280px]' : 'w-full'}`}
+    >
         <div className="relative h-full bg-[#0B0D14] border border-white/10 rounded-2xl overflow-hidden hover:-translate-y-1 transition-transform duration-300 flex flex-col hover:shadow-xl hover:shadow-cyan-900/10">
             
             {/* Khung ảnh tỷ lệ 4:3 */}

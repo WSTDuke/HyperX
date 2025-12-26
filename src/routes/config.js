@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { } from 'react';
 
 // ... Các import cũ giữ nguyên ...
 import AuthSignIn from '../page/auth/AuthSignIn';
@@ -8,7 +8,7 @@ import VerifyPage from '../page/auth/VerifyPage'
 import AuthCallback from '../page/auth/AuthCallback';
 import Product from '../page/product/page/Product';
 import NewProduct from '../page/product/page/NewProduct';
-const HomeWrapper = lazy(() => delayImport(() => import('../page/Home/HomeWrapper'), MINIMUM_LOAD_DELAY));
+import HomeWrapper from '../page/Home/HomeWrapper';
 
 // Import ProductDetail
 import ProductDetail from '../page/product/page/ProductDetail'; 
@@ -20,48 +20,12 @@ import UserProfile from '../page/profile/UserProfile'
 import PostDetail from '../page/community/PostDetail';
 import HelpAndSupport from '../page/help&support/HelpAndSupport';
 
-// --- BỔ SUNG: HÀM DELAY IMPORT ---
-/**
- * Tạo một hàm lazy load với độ trễ tối thiểu (minimum delay)
- * @param {function} factory Hàm import() component
- * @param {number} delay_ms Thời gian delay tối thiểu tính bằng mili giây (ms)
- * @returns {Promise<object>}
- */
-const delayImport = (factory, delay_ms) => {
-    return new Promise((resolve) => {
-        const startTime = Date.now();
-        
-        factory().then((module) => {
-            const timeElapsed = Date.now() - startTime;
-            const remainingDelay = delay_ms - timeElapsed;
-            
-            if (remainingDelay > 0) {
-                // Nếu thời gian tải quá nhanh, chờ nốt phần còn lại của delay
-                setTimeout(() => resolve(module), remainingDelay);
-            } else {
-                // Nếu thời gian tải đã vượt quá delay, resolve ngay lập tức
-                resolve(module);
-            }
-        });
-    });
-};
-
-// Đặt độ trễ tối thiểu là 500ms (0.5 giây)
 const MINIMUM_LOAD_DELAY = 500; 
 
-// --- CẬP NHẬT LAZY LOAD CÁC COMPONENT CHÍNH ---
-const Home = lazy(() => delayImport(() => import('../page/Home/Home'), MINIMUM_LOAD_DELAY));
-
-const ChatbotAIPage = lazy(() => delayImport(
-    () => import('../page/chatbotAI/ChatbotAI'), 
-    MINIMUM_LOAD_DELAY
-));
-
-// [MỚI] Lazy load Dashboard (Giả sử bạn lưu file Dashboard.jsx trong folder ../page/dashboard/)
-const Dashboard = lazy(() => delayImport(
-    () => import('../page/dashboard/DashboardPage'), 
-    MINIMUM_LOAD_DELAY
-));
+// --- CẬP NHẬT: ƯU TIÊN IMPORT TRỰC TIẾP CHO CÁC TRANG CHÍNH ĐỂ CÓ CẢM GIÁC INSTANT ---
+import Home from '../page/Home/Home';
+import ChatbotAIPage from '../page/chatbotAI/ChatbotAI';
+import Dashboard from '../page/dashboard/DashboardPage';
 
 const routes = [
     {

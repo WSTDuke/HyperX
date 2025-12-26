@@ -94,10 +94,18 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Lấy session ngay lập tức khi load trang
+    // Lấy session ngay lập tức khi load trang với độ trễ tối thiểu để tạo hiệu ứng "Boot" sang trọng
+    const MIN_LOAD_TIME = 500;
+    const startTime = Date.now();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null);
-      setIsAuthLoading(false);
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_LOAD_TIME - elapsed);
+      
+      setTimeout(() => {
+        setUser(session?.user || null);
+        setIsAuthLoading(false);
+      }, remaining);
     });
 
     // Lắng nghe sự thay đổi (Đăng nhập/Đăng xuất)

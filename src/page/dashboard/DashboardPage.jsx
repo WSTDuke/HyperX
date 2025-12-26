@@ -3,26 +3,26 @@ import { useNavigate, NavLink, Link } from "react-router-dom"; // Dùng NavLink 
 import { supabase } from "../../routes/supabaseClient";
 import LazyLoading from "../enhancements/LazyLoading";
 import UserAvatar from "../../components/UserAvatar"; // Import component Avatar nếu có
-import { 
-    HomeIcon, UsersIcon, ChartBarIcon, CogIcon, ArrowLeftOnRectangleIcon, 
-    BellIcon, MagnifyingGlassIcon, CheckCircleIcon, TrashIcon, 
+import {
+    HomeIcon, UsersIcon, ChartBarIcon, CogIcon, ArrowLeftOnRectangleIcon,
+    BellIcon, MagnifyingGlassIcon, CheckCircleIcon, TrashIcon,
     UserIcon, QuestionMarkCircleIcon, Cog6ToothIcon,
     CurrencyDollarIcon, ServerIcon, UserPlusIcon
 } from "@heroicons/react/24/outline";
-import { 
-    HeartIcon, ChatBubbleLeftIcon, AtSymbolIcon 
+import {
+    HeartIcon, ChatBubbleLeftIcon, AtSymbolIcon
 } from "@heroicons/react/24/solid";
 
 // --- SUB COMPONENTS ---
 
 // 1. Sidebar Item (Sử dụng NavLink để tự động handle active state)
 const NavItem = ({ to, icon, label }) => (
-    <NavLink 
-        to={to} 
+    <NavLink
+        to={to}
         className={({ isActive }) => `
             flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 group
-            ${isActive 
-                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]' 
+            ${isActive
+                ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
                 : 'text-gray-400 hover:bg-white/5 hover:text-white'
             }
         `}
@@ -49,9 +49,11 @@ const StatCard = ({ title, value, trend, trendUp, icon }) => (
     </div>
 );
 
-const Dashboard = () => {
+const MINIMUM_LOAD_DELAY = 500;
+
+const Dashboard = ({ user: propUser }) => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(propUser);
     const [loggingOut, setLoggingOut] = useState(false);
 
     // --- State cho Header interactions ---
@@ -65,30 +67,30 @@ const Dashboard = () => {
 
     // 1. Auth Check
     useEffect(() => {
-        const getUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                navigate("/signin");
-            } else {
-                setUser(user);
-            }
-        };
-        getUser();
-    }, [navigate]);
+        if (!propUser) {
+            // Nếu không có propUser, kiểm tra lại session từ Supabase
+            const checkAuth = async () => {
+                const { data: { user: sessionUser } } = await supabase.auth.getUser();
+                if (!sessionUser) navigate("/signin");
+                else setUser(sessionUser);
+            };
+            checkAuth();
+        }
+    }, [propUser, navigate]);
 
     // 2. Fetch Notifications Logic (Full Implementation)
     const fetchNotifications = useCallback(async () => {
         if (!user?.id) return;
-        
+
         try {
             // Lấy list thông báo
             const { data } = await supabase
                 .from('notifications')
-                .select('*, actor:actor_id(id, full_name, avatar_url)') 
+                .select('*, actor:actor_id(id, full_name, avatar_url)')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false })
                 .limit(20);
-            
+
             if (data) setNotifications(data);
 
             // Đếm số lượng chưa đọc
@@ -97,7 +99,7 @@ const Dashboard = () => {
                 .select('*', { count: 'exact', head: true })
                 .eq('user_id', user.id)
                 .eq('is_read', false);
-            
+
             setUnreadCount(count || 0);
         } catch (error) {
             console.error("Error fetching notifications:", error);
@@ -107,24 +109,30 @@ const Dashboard = () => {
     // 3. Realtime Subscription
     useEffect(() => {
         if (!user?.id) return;
-        
-        fetchNotifications();
+
+        // Tránh gọi trực tiếp đồng bộ trong effect, dùng setTimeout hoặc check điều kiện
+        const timer = setTimeout(() => {
+            fetchNotifications();
+        }, 0);
 
         const channel = supabase
             .channel('dashboard-notifications')
             .on(
                 'postgres_changes',
-                { 
-                    event: '*', 
-                    schema: 'public', 
-                    table: 'notifications', 
-                    filter: `user_id=eq.${user.id}` 
-                }, 
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'notifications',
+                    filter: `user_id=eq.${user.id}`
+                },
                 () => { fetchNotifications(); }
             )
             .subscribe();
 
-        return () => { supabase.removeChannel(channel); };
+        return () => {
+            clearTimeout(timer);
+            supabase.removeChannel(channel);
+        };
     }, [user, fetchNotifications]);
 
     // 4. Click Outside
