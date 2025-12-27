@@ -15,6 +15,7 @@ export default function Community({ user }) {
     const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
     const [totalMembers, setTotalMembers] = useState(0);
     const [onlineCount, setOnlineCount] = useState(0);
+    const [trendingTags, setTrendingTags] = useState([]);
 
     useEffect(() => {
         const query = searchParams.get("search");
@@ -97,7 +98,6 @@ export default function Community({ user }) {
         if (!error && data) {
             // --- QUAN TRỌNG: CHUẨN HÓA DỮ LIỆU (DATA NORMALIZATION) ---
             const formattedPosts = data.map(post => {
-                // Xử lý logic để lấy info user dù là từ view (flat) hay join (nested)
                 const userInfo = Array.isArray(post.profiles) ? post.profiles[0] : (post.profiles || {}); 
                 const metadata = post.raw_user_meta_data || {};
                 
@@ -107,11 +107,10 @@ export default function Community({ user }) {
 
                 return {
                     ...post,
-                    // Giữ nguyên object profile để UserAvatar tự resolution
                     profiles: userInfo,
                     raw_user_meta_data: {
                         ...metadata,
-                        ...userInfo, // Mix profiles vào metadata để fallback tốt hơn
+                        ...userInfo, 
                         full_name: fullName,
                         avatar_url: avatarUrl
                     },
@@ -120,6 +119,30 @@ export default function Community({ user }) {
                 };
             });
             setPosts(formattedPosts);
+
+            // --- TRÍCH XUẤT HASHTAGS ---
+            const tagMap = new Map();
+            const tagRegex = /#[\w\u00C0-\u024F]+/gu;
+
+            formattedPosts.forEach(post => {
+                const text = `${post.title} ${post.content}`;
+                const tags = text.match(tagRegex);
+                if (tags) {
+                    // Sử dụng Set để loại bỏ các hashtag trùng lặp trong cùng một bài đăng
+                    const uniqueTagsInPost = new Set(tags.map(t => t.toLowerCase()));
+                    uniqueTagsInPost.forEach(tag => {
+                        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+                    });
+                }
+            });
+
+            const sortedTags = [...tagMap.entries()]
+                .sort((a, b) => b[1] - a[1]) // Sắp xếp theo số lượng giảm dần
+                .slice(0, 8) // Lấy top 8
+                .map(entry => entry[0]);
+
+            setTrendingTags(sortedTags);
+
         } else {
             console.error("Error loading posts:", error);
             setPosts([]);
@@ -180,15 +203,19 @@ export default function Community({ user }) {
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/5 shadow-lg">
                         <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2"><TrendingUp size={20} className="text-cyan-400"/> Trending</h2>
                         <ul className="space-y-3">
-                            {['#ArtificialIntelligence', '#WebDevelopment', '#OpenSource', '#ReactJS'].map(tag => (
-                                <li 
-                                    key={tag} 
-                                    onClick={() => handleSearchChange(tag)}
-                                    className="text-sm text-gray-400 hover:text-cyan-400 cursor-pointer transition-colors block px-2 py-1 rounded hover:bg-white/5"
-                                >
-                                    {tag}
-                                </li>
-                            ))}
+                            {trendingTags.length > 0 ? (
+                                trendingTags.map(tag => (
+                                    <li 
+                                        key={tag} 
+                                        onClick={() => handleSearchChange(tag)}
+                                        className="text-sm text-gray-400 hover:text-cyan-400 cursor-pointer transition-colors block px-2 py-1 rounded hover:bg-white/5 truncate"
+                                    >
+                                        {tag}
+                                    </li>
+                                ))
+                            ) : (
+                                <p className="text-xs text-gray-600 italic px-2">No hashtags yet</p>
+                            )}
                         </ul>
                     </div>
                     <div className="p-4 rounded-2xl bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border border-white/5 shadow-lg relative overflow-hidden group">
