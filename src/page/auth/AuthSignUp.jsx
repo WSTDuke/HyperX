@@ -6,62 +6,121 @@ import LazyLoading from "../enhancements/LazyLoading";
 const AuthSignUp = () => {
     const navigate = useNavigate();
 
-    // 1. Thêm state quản lý bước (Step)
+    // 1. Add step management state
     const [step, setStep] = useState(1);
 
     const [formData, setFormData] = useState({
         name: "",
-        phone: "",
         email: "",
         password: "",
-        confirmPassword: "", // 2. Thêm confirm password
+        confirmPassword: "", // 2. Add confirm password
     });
 
     const [loading, setLoading] = useState(false);
+    const [checkingEmail, setCheckingEmail] = useState(false);
     const [message, setMessage] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Xóa thông báo lỗi khi người dùng gõ lại
+        // Clear error message when user types again
         if (message) setMessage(null);
     };
 
-    // Xử lý chuyển sang Step 2
-    const handleNextStep = (e) => {
+
+    const handleNextStep = async (e) => {
         e.preventDefault();
-        if (!formData.name || !formData.email || !formData.phone) {
-            setMessage({ type: "error", text: "Vui lòng điền đầy đủ thông tin." });
+        const trimmedEmail = formData.email.trim();
+        const trimmedName = formData.name.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!trimmedName || !trimmedEmail) {
+            setMessage({ type: "error", text: "Please fill in all required fields." });
             return;
         }
+
+        if (!emailRegex.test(trimmedEmail)) {
+            setMessage({ type: "error", text: "Invalid email format." });
+            return;
+        }
+
+        setCheckingEmail(true);
         setMessage(null);
-        setStep(2);
+
+        try {
+            // Call RPC function created in Step 1
+            const { data: status, error } = await supabase
+                .rpc('check_email_status', { email_check: trimmedEmail });
+
+            if (error) {
+                console.error("Supabase check error:", error);
+                throw error;
+            }
+
+            // Handle response cases
+            if (status === 'verified') {
+                setMessage({ 
+                    type: "error", 
+                    text: "This email is already registered. Please use a different email." 
+                });
+                setCheckingEmail(false);
+                return;
+            }
+
+            if (status === 'pending') {
+                setMessage({ 
+                    type: "error", 
+                    text: "This email is pending verification. Please check your inbox (including Spam)." 
+                });
+                setCheckingEmail(false);
+                return;
+            }
+
+            // If status === 'available' (or not found), proceed
+            setCheckingEmail(false);
+            setStep(2);
+
+        } catch (error) {
+            console.error("Error checking email availability:", error.message);
+            setMessage({ type: "error", text: "Connection error. Please try again." });
+            setCheckingEmail(false);
+        }
     };
 
-    // Xử lý quay lại Step 1
+
     const handlePrevStep = () => {
         setMessage(null);
         setStep(1);
     };
 
-    // Xử lý Submit cuối cùng
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
 
-        const { email, password, confirmPassword, name, phone } = formData;
+        const email = formData.email.trim();
+        const name = formData.name.trim();
+        const { password, confirmPassword } = formData;
 
-        // Validate Password match
         if (password !== confirmPassword) {
             setLoading(false);
-            setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp." });
+            setMessage({ type: "error", text: "Passwords do not match." });
             return;
         }
 
-        if (password.length < 6) {
+        const passwordRules = [
+            { id: 1, label: "At least 8 characters", test: (pw) => pw.length >= 8 },
+            { id: 2, label: "At least 1 uppercase letter", test: (pw) => /[A-Z]/.test(pw) },
+            { id: 3, label: "At least 1 lowercase letter", test: (pw) => /[a-z]/.test(pw) },
+            { id: 4, label: "At least 1 number", test: (pw) => /[0-9]/.test(pw) },
+            { id: 5, label: "At least 1 special character (!@#$%^&*)", test: (pw) => /[!@#$%^&*]/.test(pw) },
+        ];
+
+        const isPasswordValid = passwordRules.every(rule => rule.test(password));
+
+        if (!isPasswordValid) {
             setLoading(false);
-            setMessage({ type: "error", text: "Mật khẩu phải có ít nhất 6 ký tự." });
+            setMessage({ type: "error", text: "Password does not meet security requirements." });
             return;
         }
 
@@ -71,7 +130,10 @@ const AuthSignUp = () => {
                 password,
                 options: {
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
-                    data: { full_name: name, phone_number: phone },
+                    data: { 
+                        full_name: name || "New User",
+                        phone_number: ""
+                    },
                 },
             });
 
@@ -88,11 +150,10 @@ const AuthSignUp = () => {
         } catch (error) {
             console.error("Supabase sign up error:", error.message);
             setLoading(false);
-            setMessage({ type: "error", text: "Đăng ký thất bại. Vui lòng thử lại." });
+            setMessage({ type: "error", text: "Registration failed. Please try again." });
         }
     };
 
-    // Keep auth listener hook
     useEffect(() => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {});
         return () => { authListener.subscription.unsubscribe(); };
@@ -102,16 +163,13 @@ const AuthSignUp = () => {
         <div className="flex min-h-screen bg-[#09090b] text-white font-sans selection:bg-cyan-500/30">
             {loading && <LazyLoading status={'Initiating Sequence...'} />}
 
-            {/* --- LEFT SIDE: FORM (2/5) --- */}
             <div className="flex flex-1 flex-col justify-center px-8 py-12 sm:px-12 lg:flex-none lg:w-2/5 lg:px-12 xl:px-16 z-20 bg-[#09090b] relative border-r border-white/5 shadow-2xl">
                 
-                {/* Background Glow */}
                 <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
                      <div className="absolute top-[10%] left-[-20%] w-[20rem] h-[20rem] bg-indigo-500/5 rounded-full blur-3xl"></div>
                 </div>
 
                 <div className="mx-auto w-full max-w-sm relative z-10">
-                    {/* Header */}
                     <div className="mb-8">
                         <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
                             Get started now.
@@ -120,7 +178,6 @@ const AuthSignUp = () => {
                             <p className="text-sm text-gray-400 font-light tracking-wide uppercase">
                                 {step === 1 ? "Personal Details" : "Security Setup"}
                             </p>
-                            {/* Step Indicator */}
                             <div className="flex space-x-1">
                                 <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'bg-gray-700'}`}></div>
                                 <div className={`h-1.5 w-8 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'bg-gray-700'}`}></div>
@@ -130,10 +187,8 @@ const AuthSignUp = () => {
 
                     <form className="space-y-8">
                         
-                        {/* --- STEP 1: INFO --- */}
                         {step === 1 && (
                             <div className="space-y-8 animate-in slide-in-from-left-4 duration-300 fade-in">
-                                {/* FULL NAME */}
                                 <div className="relative group">
                                     <input
                                         id="name"
@@ -147,24 +202,6 @@ const AuthSignUp = () => {
                                     />
                                     <label htmlFor="name" className="absolute left-0 -top-3.5 text-xs text-gray-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-cyan-400 cursor-text">
                                         Full Name
-                                    </label>
-                                    <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)] transition-all duration-500 peer-focus:w-full"></div>
-                                </div>
-
-                                {/* PHONE */}
-                                <div className="relative group">
-                                    <input
-                                        id="phone"
-                                        name="phone"
-                                        type="tel"
-                                        required
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        className="peer block w-full border-b border-gray-600 bg-transparent py-2.5 px-0 text-white placeholder-transparent focus:border-cyan-400 focus:outline-none transition-colors duration-300"
-                                        placeholder="Phone"
-                                    />
-                                    <label htmlFor="phone" className="absolute left-0 -top-3.5 text-xs text-gray-400 transition-all peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 peer-focus:-top-3.5 peer-focus:text-xs peer-focus:text-cyan-400 cursor-text">
-                                        Phone Number
                                     </label>
                                     <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)] transition-all duration-500 peer-focus:w-full"></div>
                                 </div>
@@ -191,10 +228,11 @@ const AuthSignUp = () => {
                                 <div className="pt-2">
                                     <button
                                         onClick={handleNextStep}
-                                        className="group relative w-full flex justify-center py-3.5 px-4 text-sm font-bold text-black bg-white transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] overflow-hidden"
+                                        disabled={checkingEmail}
+                                        className="group relative w-full flex justify-center py-3.5 px-4 text-sm font-bold text-black bg-white transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] disabled:opacity-50 disabled:cursor-wait overflow-hidden"
                                     >
                                         <span className="relative z-10 uppercase tracking-widest flex items-center gap-2">
-                                            Continue <span className="text-lg">→</span>
+                                            {checkingEmail ? "Checking..." : "Continue"} <span className="text-lg">→</span>
                                         </span>
                                     </button>
                                 </div>
@@ -220,6 +258,30 @@ const AuthSignUp = () => {
                                         Create Password
                                     </label>
                                     <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)] transition-all duration-500 peer-focus:w-full"></div>
+                                </div>
+
+                                {/* PASSWORD REQUIREMENTS */}
+                                <div className="space-y-2 pt-2">
+                                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Password must have:</p>
+                                    <div className="grid grid-cols-1 gap-1.5">
+                                        {[
+                                            { label: "Ít nhất 8 ký tự", test: (pw) => pw.length >= 8 },
+                                            { label: "Ít nhất 1 chữ hoa", test: (pw) => /[A-Z]/.test(pw) },
+                                            { label: "Ít nhất 1 chữ thường", test: (pw) => /[a-z]/.test(pw) },
+                                            { label: "Ít nhất 1 chữ số", test: (pw) => /[0-9]/.test(pw) },
+                                            { label: "Ít nhất 1 ký tự đặc biệt (!@#$%^&*)", test: (pw) => /[!@#$%^&*]/.test(pw) },
+                                        ].map((rule, idx) => {
+                                            const isMet = rule.test(formData.password);
+                                            return (
+                                                <div key={idx} className="flex items-center gap-2">
+                                                    <div className={`h-1 w-1 rounded-full ${isMet ? 'bg-cyan-400 shadow-[0_0_5px_rgba(34,211,238,0.8)]' : 'bg-gray-700'}`}></div>
+                                                    <span className={`text-[11px] leading-none transition-colors ${isMet ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                                        {rule.label}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
 
                                 {/* CONFIRM PASSWORD */}
@@ -251,8 +313,14 @@ const AuthSignUp = () => {
                                     </button>
                                     <button
                                         onClick={handleSignUp}
-                                        disabled={loading}
-                                        className="flex-1 group relative flex justify-center py-3.5 px-4 text-sm font-bold text-black bg-white transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden"
+                                        disabled={loading || !([
+                                            (pw) => pw.length >= 8,
+                                            (pw) => /[A-Z]/.test(pw),
+                                            (pw) => /[a-z]/.test(pw),
+                                            (pw) => /[0-9]/.test(pw),
+                                            (pw) => /[!@#$%^&*]/.test(pw)
+                                        ].every(test => test(formData.password)))}
+                                        className="flex-1 group relative flex justify-center py-3.5 px-4 text-sm font-bold text-black bg-white transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.4)] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed overflow-hidden"
                                     >
                                         <span className="relative z-10 uppercase tracking-widest">
                                             {loading ? "Processing..." : "Complete"}
