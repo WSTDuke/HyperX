@@ -402,7 +402,7 @@ export default function ChatbotAIPage({ user }) {
       {isProfileLoading ? (
         <PageSkeleton />
       ) : isChatStarted ? (
-        <div className="flex flex-col flex-1 h-full w-full max-w-5xl mx-auto relative z-10">
+        <div className="mt-6 flex flex-col flex-1 h-full w-full max-w-5xl mx-auto relative z-10">
           <div ref={msgContainerRef} className="flex-1 overflow-y-auto px-4 md:px-6 pt-6 pb-4 custom-scrollbar scroll-smooth">
             <div className="max-w-3xl mx-auto w-full">
                 {messages.map((msg) => (
@@ -431,7 +431,7 @@ export default function ChatbotAIPage({ user }) {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto px-4 relative z-10">
+        <div className=" flex flex-col items-center justify-center flex-1 w-full max-w-4xl mx-auto px-4 relative z-10">
           <div className="text-center mb-12 space-y-6 animate-in fade-in zoom-in duration-500">
             <div className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] bg-gradient-to-br from-cyan-500 to-blue-600 shadow-[0_0_50px_rgba(34,211,238,0.4)] mb-4 ring-1 ring-white/20">
                 <Bot size={48} className="text-white" />
