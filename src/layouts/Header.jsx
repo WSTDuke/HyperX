@@ -36,6 +36,8 @@ const Header = ({ user }) => {
     // --- State Thông báo ---
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [hasSeenNoti, setHasSeenNoti] = useState(false);
+    const prevUnreadCount = useRef(0);
     const [isAuthModalOpen, setIsAuthModalOpen ] = useState(false);
 
     // --- State Tìm kiếm người dùng ---
@@ -130,6 +132,14 @@ const Header = ({ user }) => {
             console.error("Error fetching notifications:", error);
         }
     }, [user]);
+
+    // Tracking unread count for badge visibility
+    useEffect(() => {
+        if (unreadCount > prevUnreadCount.current) {
+            setHasSeenNoti(false);
+        }
+        prevUnreadCount.current = unreadCount;
+    }, [unreadCount]);
 
     // Lắng nghe Fetch & Realtime Notifications
     useEffect(() => {
@@ -393,11 +403,14 @@ const Header = ({ user }) => {
                             {/* --- NOTIFICATION --- */}
                             <div className="relative" ref={notiRef}>
                                 <button 
-                                    onClick={() => setNotiOpen(!notiOpen)}
+                                    onClick={() => {
+                                        setNotiOpen(!notiOpen);
+                                        setHasSeenNoti(true);
+                                    }}
                                     className={`relative p-2.5 rounded-full transition-all duration-200 group ${notiOpen ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                                 >
                                     <BellIcon className="w-6 h-6 group-hover:text-cyan-400 transition-colors" />
-                                    {unreadCount > 0 && (
+                                    {unreadCount > 0 && !hasSeenNoti && (
                                         <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-[#05050A] animate-pulse">
                                             {unreadCount > 9 ? '9+' : unreadCount}
                                         </span>

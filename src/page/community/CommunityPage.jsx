@@ -427,12 +427,13 @@ export default function Community({ user }) {
             </div>
 
             <PostFormModal
-                isOpen={showModal}
+                show={showModal}
                 onClose={() => setShowModal(false)}
                 form={form}
                 setForm={setForm}
                 onSubmit={submitPost}
                 loading={loading}
+                currentUser={currentUser}
             />
         </div>
     );
