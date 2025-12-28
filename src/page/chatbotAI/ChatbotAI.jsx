@@ -442,7 +442,7 @@ export default function ChatbotAIPage({ user }) {
               </span>
             </h1>
             <p className="text-xl text-gray-400 max-w-xl mx-auto font-light leading-relaxed">
-              I'm HyperX AI. Powered by Gemini.
+             “I’m HyperX AI — built to assist and optimize.”
             </p>
           </div>
           
