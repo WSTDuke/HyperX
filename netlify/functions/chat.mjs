@@ -1,53 +1,28 @@
 // File: netlify/functions/chat.mjs
 export default async function handler(req, context) {
-  // 1. Chỉ nhận method POST
-  if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
-  }
+  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+
+  const apiKey = Netlify.env.get("GOOGLE_API_KEY");
+  if (!apiKey) return new Response(JSON.stringify({ error: "Chưa có API Key" }), { status: 500 });
 
   try {
-    // 2. Lấy API Key từ cài đặt Netlify
-    const apiKey = Netlify.env.get("GOOGLE_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "Missing API Key in Netlify" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-
-    // 3. Lấy dữ liệu từ Frontend
     const body = await req.json();
     const { message, image, history } = body;
 
-    // 4. Cấu hình Model (Dùng tên phiên bản cụ thể để tránh lỗi 404)
-    // Bạn có thể đổi thành "gemini-1.5-flash-8b" nếu muốn nhanh hơn nữa
-    const MODEL_NAME = "gemini-1.5-flash"; 
+    // 1. Thử dùng model phiên bản cụ thể (Ổn định hơn bản viết tắt)
+    const MODEL_NAME = "gemini-1.5-flash-001";
     
-    // Gọi trực tiếp API v1beta (Không qua SDK)
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
 
-    // Chuẩn bị nội dung gửi đi
     const contents = [];
-
-    // Map lịch sử chat
-    if (history && Array.isArray(history)) {
-      history.forEach(h => {
-        const role = h.role === 'client' || h.role === 'user' ? 'user' : 'model';
-        contents.push({ role, parts: h.parts });
-      });
-    }
-
-    // Map tin nhắn hiện tại
+    if (history) history.forEach(h => contents.push({ role: h.role === 'client' ? 'user' : 'model', parts: h.parts }));
+    
     const currentParts = [];
     if (message) currentParts.push({ text: message });
-    if (image) {
-      currentParts.push({
-        inline_data: { mime_type: "image/jpeg", data: image }
-      });
-    }
+    if (image) currentParts.push({ inline_data: { mime_type: "image/jpeg", data: image } });
     contents.push({ role: "user", parts: currentParts });
 
-    // 5. Thực hiện gọi API (FETCH)
+    // 2. Gọi API
     const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,29 +34,32 @@ export default async function handler(req, context) {
 
     const data = await response.json();
 
-    // Xử lý lỗi từ Google
+    // 3. XỬ LÝ LỖI THÔNG MINH
     if (!response.ok) {
-      const errorMessage = data.error?.message || response.statusText;
-      console.error("Google API Error:", errorMessage);
-      return new Response(JSON.stringify({ error: `Google Error: ${errorMessage}` }), {
-        status: 500, // Hoặc status tương ứng
-        headers: { "Content-Type": "application/json" }
-      });
+      console.error("API Error:", data);
+
+      // Nếu lỗi 404 (Không tìm thấy model), ta sẽ gọi API liệt kê danh sách model để xem Key này có gì
+      if (response.status === 404 || data.error?.code === 404) {
+        try {
+          const listResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+          const listData = await listResp.json();
+          const availableModels = listData.models?.map(m => m.name.replace('models/', '')) || [];
+          
+          return new Response(JSON.stringify({ 
+            error: `Model '${MODEL_NAME}' không dùng được. Các model khả dụng của bạn là: ${availableModels.join(", ")}` 
+          }), { status: 500 });
+        } catch (e) {
+            // Lỗi khi lấy danh sách
+        }
+      }
+
+      throw new Error(data.error?.message || "Google API Error");
     }
 
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
-    // 6. Trả kết quả về Frontend
-    return new Response(JSON.stringify({ text }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
+    return new Response(JSON.stringify({ text }), { status: 200 });
 
   } catch (error) {
-    console.error("Function Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
