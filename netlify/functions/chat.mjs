@@ -9,8 +9,7 @@ export default async function handler(req, context) {
     const body = await req.json();
     const { message, image, history } = body;
 
-const MODEL_NAME = "gemini-flash-latest";
-
+    const MODEL_NAME = "gemini-flash-latest";
     
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
 

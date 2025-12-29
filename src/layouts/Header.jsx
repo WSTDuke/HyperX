@@ -122,13 +122,22 @@ const Header = ({ user }) => {
             
             if (data) setNotifications(data);
 
-            const { count } = await supabase
+            const { count: fetchedUnreadCount } = await supabase
                 .from('notifications')
                 .select('*', { count: 'exact', head: true })
                 .eq('user_id', user.id)
                 .eq('is_read', false);
             
-            setUnreadCount(count || 0);
+            const finalCount = fetchedUnreadCount || 0;
+            setUnreadCount(finalCount);
+
+            // Check if we have seen these notifications before
+            const lastSeen = parseInt(localStorage.getItem('hyperx_last_seen_count') || '0', 10);
+            if (finalCount <= lastSeen) {
+                setHasSeenNoti(true);
+            } else {
+                setHasSeenNoti(false);
+            }
         } catch (error) {
             console.error("Error fetching notifications:", error);
         }
@@ -173,7 +182,7 @@ const Header = ({ user }) => {
                     // Fetch Last Message
                     const { data: lastMsg } = await supabase
                         .from('messages')
-                        .select('content, created_at, sender_id')
+                        .select('content, created_at, sender_id, is_read')
                         .eq('conversation_id', c.id)
                         .order('created_at', { ascending: false })
                         .limit(1)
@@ -204,8 +213,19 @@ const Header = ({ user }) => {
         fetchConversations();
     }, [msgOpen, user]);
 
-    const handleOpenChat = (partner) => {
+    const handleOpenChat = async (partner, conversationId) => {
         if (!partner) return;
+        
+        // Mark as read in DB if there are unread messages from partner
+        if (conversationId && user?.id) {
+            await supabase
+                .from('messages')
+                .update({ is_read: true })
+                .eq('conversation_id', conversationId)
+                .neq('sender_id', user.id)
+                .eq('is_read', false);
+        }
+
         setMsgOpen(false);
         // Dispatch event để ChatBox mở
         window.dispatchEvent(new CustomEvent('hyperx-open-chat', { detail: partner }));
@@ -565,7 +585,7 @@ const Header = ({ user }) => {
                                 </button>
 
                                 {msgOpen && (
-                                    <div className="absolute right-0 mt-4 w-[360px] rounded-2xl bg-[#1e1e1e] border border-white/10 shadow-2xl z-[110] overflow-hidden origin-top-right animate-in fade-in zoom-in duration-200 ring-1 ring-white/5 font-sans">
+                                    <div className="absolute right-0 mt-4 w-[360px] rounded-2xl bg-[#0B0D14] border border-white/10 shadow-2xl z-[110] overflow-hidden origin-top-right animate-in fade-in zoom-in duration-200 ring-1 ring-white/5 font-sans">
                                         {/* HEADER */}
                                         <div className="p-4 pb-2">
                                             <div className="flex items-center justify-between mb-3">
@@ -580,15 +600,8 @@ const Header = ({ user }) => {
                                                     placeholder="Search Messenger" 
                                                     value={msgSearchQuery}
                                                     onChange={(e) => setMsgSearchQuery(e.target.value)}
-                                                    className="w-full bg-[#2a2b2e] text-gray-200 text-sm rounded-full py-2 pl-9 pr-4 focus:outline-none focus:ring-1 focus:ring-cyan-500 placeholder-gray-500"
+                                                    className="w-full bg-[#1A1D24] text-gray-200 text-sm rounded-full py-2 pl-9 pr-4 focus:outline-none focus:ring-1 focus:ring-cyan-500 placeholder-gray-500 border border-white/5"
                                                 />
-                                            </div>
-
-                                            {/* TABS (Mockup) */}
-                                            <div className="flex gap-2">
-                                                <button className="px-3 py-1.5 rounded-full bg-cyan-500/20 text-cyan-400 text-sm font-semibold hover:bg-cyan-500/30 transition-colors">All</button>
-                                                <button className="px-3 py-1.5 rounded-full bg-transparent text-gray-400 text-sm font-medium hover:bg-white/5 transition-colors">Unread</button>
-                                                <button className="px-3 py-1.5 rounded-full bg-transparent text-gray-400 text-sm font-medium hover:bg-white/5 transition-colors">Groups</button>
                                             </div>
                                         </div>
 
@@ -610,7 +623,7 @@ const Header = ({ user }) => {
                                                 }).map((conv) => (
                                                     <div 
                                                         key={conv.id}
-                                                        onClick={() => handleOpenChat(conv.partner)}
+                                                        onClick={() => handleOpenChat(conv.partner, conv.id)}
                                                         className="flex gap-3 p-2.5 rounded-xl cursor-pointer hover:bg-white/5 transition-colors group items-center relative"
                                                     >
                                                         <div className="relative flex-shrink-0">
@@ -622,12 +635,20 @@ const Header = ({ user }) => {
                                                                 {conv.partner?.full_name || 'Instagram User'}
                                                             </h4>
                                                             <div className="flex items-center gap-1 text-[13px] text-gray-400">
-                                                                <p className="truncate max-w-[160px]">
+                                                                <p className={`truncate max-w-[160px] ${
+                                                                    conv.lastMessage?.sender_id !== user?.id && !conv.lastMessage?.is_read 
+                                                                    ? 'text-white font-bold' 
+                                                                    : ''
+                                                                }`}>
                                                                     {conv.lastMessage?.sender_id === user?.id ? 'You: ' : ''}
                                                                     {conv.lastMessage?.content || 'Sent an attachment'}
                                                                 </p>
                                                                 <span>·</span>
-                                                                <span className="whitespace-nowrap">
+                                                                <span className={`whitespace-nowrap ${
+                                                                    conv.lastMessage?.sender_id !== user?.id && !conv.lastMessage?.is_read 
+                                                                    ? 'text-white font-bold' 
+                                                                    : ''
+                                                                }`}>
                                                                     {conv.lastMessage 
                                                                         ? (() => {
                                                                             const diff = (new Date() - new Date(conv.lastMessage.created_at)) / 1000 / 60; // minutes
@@ -733,6 +754,7 @@ const Header = ({ user }) => {
                                     onClick={() => {
                                         setNotiOpen(!notiOpen);
                                         setHasSeenNoti(true);
+                                        localStorage.setItem('hyperx_last_seen_count', unreadCount.toString());
                                     }}
                                     className={`relative p-2.5 rounded-full transition-all duration-200 group ${notiOpen ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
                                 >

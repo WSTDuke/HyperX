@@ -118,7 +118,23 @@ const ChatSession = ({
         if (isOpen && scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-    }, [messages, isOpen]);
+
+        // Mark as read in DB if open
+        if (isOpen && conversation && messages.length > 0 && currentUser) {
+            const unreadMessages = messages.filter(m => !m.is_read && m.sender_id !== currentUser.id);
+            if (unreadMessages.length > 0) {
+                 supabase
+                    .from('messages')
+                    .update({ is_read: true })
+                    .eq('conversation_id', conversation.id)
+                    .neq('sender_id', currentUser.id)
+                    .eq('is_read', false)
+                    .then(({ error }) => {
+                        if (error) console.error("Error marking read:", error);
+                    });
+            }
+        }
+    }, [messages, isOpen, conversation, currentUser]);
 
     // --- HANDLERS ---
     const handleSendMessage = async (e) => {
