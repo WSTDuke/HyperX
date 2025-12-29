@@ -1,65 +1,87 @@
 // File: netlify/functions/chat.mjs
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-export async function handler(event, context) {
-  // 1. Chỉ chấp nhận method POST
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+export default async function handler(req, context) {
+  // 1. Chỉ nhận method POST
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", { status: 405 });
   }
 
   try {
-    // 2. Lấy dữ liệu từ Frontend gửi lên
-    const { message, image, history } = JSON.parse(event.body);
-
-    // 3. Lấy API Key từ biến môi trường Netlify
-    const apiKey = process.env.GOOGLE_API_KEY;
+    // 2. Lấy API Key từ cài đặt Netlify
+    const apiKey = Netlify.env.get("GOOGLE_API_KEY");
     if (!apiKey) {
-      return { statusCode: 500, body: JSON.stringify({ error: "Missing API Key" }) };
+      return new Response(JSON.stringify({ error: "Missing API Key in Netlify" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    // 4. Khởi tạo Google AI (Dùng model 1.5 Flash từ dự án mới)
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // 3. Lấy dữ liệu từ Frontend
+    const body = await req.json();
+    const { message, image, history } = body;
 
-    let result;
+    // 4. Cấu hình Model (Dùng tên phiên bản cụ thể để tránh lỗi 404)
+    // Bạn có thể đổi thành "gemini-1.5-flash-8b" nếu muốn nhanh hơn nữa
+    const MODEL_NAME = "gemini-1.5-flash"; 
+    
+    // Gọi trực tiếp API v1beta (Không qua SDK)
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+
+    // Chuẩn bị nội dung gửi đi
+    const contents = [];
+
+    // Map lịch sử chat
+    if (history && Array.isArray(history)) {
+      history.forEach(h => {
+        const role = h.role === 'client' || h.role === 'user' ? 'user' : 'model';
+        contents.push({ role, parts: h.parts });
+      });
+    }
+
+    // Map tin nhắn hiện tại
+    const currentParts = [];
+    if (message) currentParts.push({ text: message });
     if (image) {
-      // Xử lý Gửi ảnh
-      result = await model.generateContent([
-        message,
-        { inlineData: { data: image, mimeType: "image/jpeg" } }
-      ]);
-    } else {
-      // Xử lý Chat Text
-      let chat;
-      if (history && history.length > 0) {
-        // Map history cho đúng định dạng
-        const validHistory = history.map(h => ({
-          role: h.role === 'client' ? 'user' : (h.role === 'model' ? 'model' : 'user'),
-          parts: h.parts
-        }));
-        chat = model.startChat({ history: validHistory });
-      } else {
-        chat = model.startChat();
-      }
-      result = await chat.sendMessage(message);
+      currentParts.push({
+        inline_data: { mime_type: "image/jpeg", data: image }
+      });
+    }
+    contents.push({ role: "user", parts: currentParts });
+
+    // 5. Thực hiện gọi API (FETCH)
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: contents,
+        generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
+      })
+    });
+
+    const data = await response.json();
+
+    // Xử lý lỗi từ Google
+    if (!response.ok) {
+      const errorMessage = data.error?.message || response.statusText;
+      console.error("Google API Error:", errorMessage);
+      return new Response(JSON.stringify({ error: `Google Error: ${errorMessage}` }), {
+        status: 500, // Hoặc status tương ứng
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    const response = await result.response;
-    const text = response.text();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // 5. Trả kết quả về (Thành công)
-    return {
-      statusCode: 200,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    };
+    // 6. Trả kết quả về Frontend
+    return new Response(JSON.stringify({ text }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" }
+    });
 
   } catch (error) {
-    console.error("API Error:", error);
-    return {
-      statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: error.message })
-    };
+    console.error("Function Error:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
 }
