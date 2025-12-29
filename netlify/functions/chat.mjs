@@ -10,7 +10,7 @@ export default async function handler(req, context) {
     const { message, image, history } = body;
 
     // 1. Thử dùng model phiên bản cụ thể (Ổn định hơn bản viết tắt)
-    const MODEL_NAME = "gemini-1.5-flash-001";
+    const MODEL_NAME = "gemini-2.0-flash";
     
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
 
