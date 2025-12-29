@@ -9,7 +9,7 @@ const HomeWrapper = ({ user }) => {
         // Nếu đã có user -> Đá sang Community ngay lập tức mà không cần fetch lại
         if (user) {
             console.log("User detected from prop, redirecting to Community...");
-            navigate('/community', { replace: true });
+            navigate('/', { replace: true });
         }
     }, [user, navigate]);
 

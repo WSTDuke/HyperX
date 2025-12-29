@@ -10,8 +10,10 @@ import ScrollToTop from './page/enhancements/ScrollTop';
 import ChatBox from './components/ChatBox';
 
 // Routes Config & Protection
-import routes from './routes/config'; // File config đã sửa có HomeWrapper
-import PrivateRoute from './routes/PrivateRoute'; // File PrivateRoute đã tạo ở bước trước
+// Routes Config & Protection
+import routes from './routes/config'; 
+import PrivateRoute from './routes/PrivateRoute'; 
+import GuestRoute from './routes/GuestRoute';
 
 // --- COMPONENT QUẢN LÝ ROUTES & LAYOUT ---
 function AppRoutes({ user }) {
@@ -26,18 +28,19 @@ function AppRoutes({ user }) {
   const hideFooterOn = [
     ...hideHeaderOn,
     '/chatbot-ai',
-    '/community',
+
+    '/', 
     '/product',
     '/docs',
     '/create-product',
-    '/product/edit/:id', // Đường dẫn động
-    '/product/:id',      // Đường dẫn động
+    '/product/edit/:id', 
+    '/product/:id',      
     '/profile',
     '/profile/:id',
     '/setting',
   ];
   
-  const showFooter = !hideFooterOn.some(path => matchPath({ path, end: false }, location.pathname));
+  const showFooter = !hideFooterOn.some(path => matchPath({ path, end: true }, location.pathname)); // Changed end: false to true for exact matching on root, mostly.
 
   return (
     <>
@@ -49,15 +52,23 @@ function AppRoutes({ user }) {
       <Suspense fallback={<LazyLoading />}>
         <Routes>
           
-          {/* NHÓM 1: PUBLIC ROUTES (Bao gồm HomeWrapper, Signin, Signup...) */}
+          {/* NHÓM 1: PUBLIC ROUTES & GUEST ROUTES */}
           {routes.map((route, index) => {
             if (!route.private) {
+              const element = <route.element user={user} />;
               return (
                 <Route 
                   key={index} 
                   path={route.path} 
-                  // Truyền user prop xuống để tương thích code cũ của bạn
-                  element={<route.element user={user} />} 
+                  element={
+                    route.guestOnly ? (
+                      <GuestRoute user={user}>
+                        {element}
+                      </GuestRoute>
+                    ) : (
+                      element
+                    )
+                  } 
                 />
               );
             }
@@ -66,6 +77,7 @@ function AppRoutes({ user }) {
 
           {/* NHÓM 2: PRIVATE ROUTES (Bảo vệ bởi PrivateRoute) */}
           <Route element={<PrivateRoute user={user} />}>
+
             {routes.map((route, index) => {
               if (route.private) {
                 return (

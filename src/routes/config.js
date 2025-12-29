@@ -31,43 +31,49 @@ import ChatbotAIPage from '../page/chatbotAI/ChatbotAI';
 const routes = [
     {
         path: "/",
-        element: HomeWrapper, 
+        element: Community, 
         exact: true,
-        name: "Trang Chủ",
+        private: true,
+        name: "Cộng đồng", // Was "Trang Chủ", now Community
     },
-    {
-        path: "/home",
-        element: Home,
-        exact: true,
-        name: "Trang Chủ",
-    },
+    // {
+    //     path: "/home",
+    //     element: Home,
+    //     exact: true,
+    //     name: "Trang Chủ",
+    // },
     // -----------------------------------------------------------
     {
         path: "/signin",
         element: AuthSignIn,
         private: false,
+        guestOnly: true,
         name: "Đăng Nhập",
     },
     {
         path: "/signup",
         element: AuthSignUp,
         private: false,
+        guestOnly: true,
         name: "Đăng ký",
     },
     {
         path: "/verify",
         element: VerifyPage,
         name: "Xác thực",
+        guestOnly: true,
     },
     {
         path: "/auth/callback",
         element: AuthCallback,
         name: "Xác thực người dùng",
+        // No guestOnly here to allow processing
     },
     {
         path: "/forgot-password",
         element: AuthForgotPassword,
         name: "Quên mật khẩu",
+        guestOnly: true,
     },
     {
         path: "/update-password",
@@ -137,13 +143,6 @@ const routes = [
         element: Setting, 
         private: true,
         name: "Cài đặt",
-    },
-    // -----------------------------------------------------------
-    {
-        path: "/community",
-        element: Community,
-        private: true,
-        name: "Cộng đồng",
     },
     {
         path: "/post/:id",  
