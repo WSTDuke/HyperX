@@ -5,7 +5,7 @@ import LazyLoading from "../page/enhancements/LazyLoading";
 import NeedAuthModal from "../components/NeedAuthModal";
 import { Bars3Icon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Dialog, DialogPanel, Transition, TransitionChild } from "@headlessui/react";
-import { UserPlusIcon } from "@heroicons/react/24/solid";
+import { UserPlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 
 import { useNotifications } from "../hooks/useNotifications";
 import { useChatConversations } from "../hooks/useChatConversations";
