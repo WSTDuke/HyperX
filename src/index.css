@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 body {
-  background-color: #1f2937;
+  background-color: #020205;
+  overscroll-behavior: none;
 }
 
 html {
+  overscroll-behavior: none;
   scrollbar-width: thin;
-  scrollbar-color: #06b6d4 #1f2937;
+  scrollbar-color: #06b6d4 #020205;
   scrollbar-gutter: stable;
 }
 
@@ -20,7 +22,7 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1f2937;
+  background: #020205;
   border-radius: 5px;
 }
 
@@ -29,19 +31,29 @@ button {
   border-radius: 5px;
 }
 
-/* 4. Thay đổi màu khi di chuột (Hover) */
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, #06b6d4, #0891b2);
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.02); }
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
 }
 
 .skeleton {
@@ -52,17 +64,20 @@ button {
 }
 
 .skeleton-cyan {
-  background: linear-gradient(90deg, 
-    rgba(6, 182, 212, 0.03) 0%, 
-    rgba(6, 182, 212, 0.08) 50%, 
-    rgba(6, 182, 212, 0.03) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(6, 182, 212, 0.03) 0%,
+    rgba(6, 182, 212, 0.08) 50%,
+    rgba(6, 182, 212, 0.03) 100%
+  );
   background-size: 200% 100%;
-  animation: shimmer 2s infinite linear, pulse-glow 3s infinite ease-in-out;
+  animation:
+    shimmer 2s infinite linear,
+    pulse-glow 3s infinite ease-in-out;
   border: 1px solid rgba(6, 182, 212, 0.1);
   box-shadow: 0 0 20px rgba(6, 182, 212, 0.03);
 }
 
-/* Premium Global Loader (Matching Image) */
 .premium-loader {
   width: 80px;
   height: 80px;
@@ -99,16 +114,70 @@ button {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Splash Screen Fade Out */
 @keyframes splash-fade-out {
-  0% { opacity: 1; filter: blur(0px); }
-  100% { opacity: 0; filter: blur(20px); transform: scale(1.1); pointer-events: none; }
+  0% {
+    opacity: 1;
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    filter: blur(20px);
+    transform: scale(1.1);
+    pointer-events: none;
+  }
 }
 
 .animate-splash-exit {
   animation: splash-fade-out 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.tech-card {
+  background: rgba(11, 13, 20, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.tech-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 2px;
+  background: #22d3ee;
+  box-shadow: 0 0 10px #22d3ee;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tech-card:hover::before {
+  opacity: 1;
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+
+.border-glow-cyan {
+  border-color: rgba(34, 211, 238, 0.3);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.1);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

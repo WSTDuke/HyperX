@@ -1,5 +1,5 @@
 import React from 'react'
-// Đảm bảo đường dẫn ảnh đúng với project của bạn
+
 import IMGgame from '../../assets/OIP.webp'
 import IMGapp from '../../assets/mexicanas-580x385.jpg'
 import IMGfinance from '../../assets/banking-symbol-financial-system-icon-circulation-vector-2500843-15654281304022058063886-crop-15654281627291067117848-crop-1565428177047472866763.jpg'
@@ -9,17 +9,17 @@ const HomeBody_2 = () => {
     return (
         <div className="relative isolate py-32 lg:py-48">
             
-            {/* LIGHTING: Side Glows */}
+            {}
             <div className="absolute top-1/2 -left-64 -z-10 h-[40rem] w-[40rem] -translate-y-1/2 rounded-full bg-cyan-600/10 blur-[130px] pointer-events-none"></div>
             <div className="absolute top-1/2 -right-64 -z-10 h-[40rem] w-[40rem] -translate-y-1/2 rounded-full bg-blue-600/10 blur-[130px] pointer-events-none"></div>
 
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center font-sans">
                     
-                    {/* Text Content */}
+                    {}
                     <div className="lg:pr-8">
                         <div className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/5 px-4 py-1.5 text-xs font-black text-cyan-500 mb-8 backdrop-blur-3xl uppercase tracking-widest">
-                            <span>01 // Global Connectivity</span>
+                            <span>01</span>
                         </div>
                         <h2 className="text-5xl font-black tracking-tighter text-white sm:text-7xl mb-8 leading-[0.9]">
                             REDEFINING <br/> INTERACTION.
@@ -43,7 +43,7 @@ const HomeBody_2 = () => {
                         </div>
                     </div>
 
-                    {/* Image Grid - Glass Style */}
+                    {}
                     <div className="relative">
                         <div className="absolute inset-0 bg-cyan-500/5 blur-[100px] -z-10 opacity-30"></div>
                         <div className="grid grid-cols-2 gap-6">

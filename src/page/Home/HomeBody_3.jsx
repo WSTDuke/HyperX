@@ -4,13 +4,13 @@ const HomeBody_3 = () => {
     return (
         <div className="py-32 sm:py-48 relative isolate">
             
-            {/* LIGHTING: Bottom Radial */}
+            {}
             <div className="absolute inset-0 -z-10 bg-[radial-gradient(50rem_50rem_at_bottom,theme(colors.cyan.900),transparent)] opacity-10" />
             
             <div className="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
                 <div className="mb-24 text-center max-w-3xl mx-auto">
                     <div className="inline-flex items-center rounded-full border border-cyan-500/20 bg-cyan-500/5 px-4 py-1.5 text-xs font-black text-cyan-500 mb-6 backdrop-blur-3xl uppercase tracking-widest">
-                        <span>02 // Tech Stack</span>
+                        <span>02</span>
                     </div>
                     <h2 className="text-5xl font-black tracking-tighter text-white sm:text-7xl leading-[0.9]">
                         BUILT TO <span className="text-cyan-500">SCALE.</span>
@@ -19,7 +19,7 @@ const HomeBody_3 = () => {
 
                 <div className="grid gap-6 lg:grid-cols-3 lg:grid-rows-2 font-sans">
                     
-                    {/* Card 1 */}
+                    {}
                     <BentoCard title="Dynamic Rendering" desc="State-of-the-art UI processing engine." colSpan="lg:row-span-2">
                         <div className="relative min-h-[350px] w-full grow mt-10">
                             <div className="absolute inset-x-10 top-10 bottom-0 overflow-hidden rounded-t-[2.5rem] border-x border-t border-white/10 bg-[#020205] shadow-2xl group-hover:border-cyan-500/30 transition-colors duration-500">
@@ -29,7 +29,7 @@ const HomeBody_3 = () => {
                         </div>
                     </BentoCard>
 
-                    {/* Card 2 */}
+                    {}
                     <BentoCard title="Warp Speed" desc="Optimized for 120fps across all platforms." colSpan="max-lg:row-start-1">
                         <div className="flex flex-1 items-center justify-center px-10 py-12 relative overflow-hidden group/img">
                             <div className="absolute inset-0 bg-cyan-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -37,14 +37,14 @@ const HomeBody_3 = () => {
                         </div>
                     </BentoCard>
 
-                    {/* Card 3 */}
+                    {}
                     <BentoCard title="Quantum Guard" desc="Hyper-secure data silos and encryption." colSpan="max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
                         <div className="flex flex-1 items-center px-10 py-10">
                             <img src="https://tailwindcss.com/plus-assets/img/component-images/dark-bento-03-security.png" className="h-[140px] w-full object-contain opacity-60 group-hover:opacity-90 group-hover:rotate-3 transition-all duration-500" alt="" />
                         </div>
                     </BentoCard>
 
-                    {/* Card 4 (APIs) */}
+                    {}
                     <BentoCard title="Hyper APIs" desc="Fully extensible neural endpoints." colSpan="lg:row-span-2">
                         <div className="relative min-h-[350px] w-full grow mt-10">
                              <div className="absolute top-10 right-0 bottom-0 left-10 overflow-hidden rounded-tl-[2rem] bg-[#020205] border-l border-t border-white/10 shadow-2xl group-hover:border-cyan-500/20 transition-all duration-500">

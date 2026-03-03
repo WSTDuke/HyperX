@@ -1,0 +1,15 @@
+C:\Users\Admin\Desktop\Project\HyperX\src\components\ChatBox.jsx:542
+C:\Users\Admin\Desktop\Project\HyperX\src\layouts\Footer.jsx:243
+C:\Users\Admin\Desktop\Project\HyperX\src\layouts\Header.jsx:1327
+C:\Users\Admin\Desktop\Project\HyperX\src\page\auth\AuthSignIn.jsx:212
+C:\Users\Admin\Desktop\Project\HyperX\src\page\auth\AuthSignUp.jsx:466
+C:\Users\Admin\Desktop\Project\HyperX\src\page\chatbotAI\ChatbotAI.jsx:741
+C:\Users\Admin\Desktop\Project\HyperX\src\page\chatbotAI\ChatInput.jsx:281
+C:\Users\Admin\Desktop\Project\HyperX\src\page\chatbotAI\MarkdownText.jsx:322
+C:\Users\Admin\Desktop\Project\HyperX\src\page\community\CommunityPage.jsx:520
+C:\Users\Admin\Desktop\Project\HyperX\src\page\community\PostItem.jsx:1178
+C:\Users\Admin\Desktop\Project\HyperX\src\page\docs\Docs.jsx:558
+C:\Users\Admin\Desktop\Project\HyperX\src\page\help&support\HelpAndSupport.jsx:326
+C:\Users\Admin\Desktop\Project\HyperX\src\page\product\page\NewProduct.jsx:1004
+C:\Users\Admin\Desktop\Project\HyperX\src\page\product\page\ProductDetail.jsx:675
+C:\Users\Admin\Desktop\Project\HyperX\src\page\setting\Setting.jsx:638

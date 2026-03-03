@@ -2,37 +2,37 @@ import { useEffect, useState } from "react";
 import { ArrowUp } from "lucide-react";
 
 export default function ScrollToTopButton() {
-    const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-    useEffect(() => {
-        const toggleVisible = () => {
-            if (window.scrollY > 200) {
-                setVisible(true);
-            } else {
-                setVisible(false);
-            }
-        };
-        window.addEventListener("scroll", toggleVisible);
-        return () => window.removeEventListener("scroll", toggleVisible);
-    }, []);
-
-    const scrollToTop = () => {
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth",
-        });
+  useEffect(() => {
+    const toggleVisible = () => {
+      if (window.scrollY > 200) {
+        setVisible(true);
+      } else {
+        setVisible(false);
+      }
     };
+    window.addEventListener("scroll", toggleVisible);
+    return () => window.removeEventListener("scroll", toggleVisible);
+  }, []);
 
-    return (
-        <>
-            {visible && (
-                <button
-                    onClick={scrollToTop}
-                    className="fixed bottom-5 right-5 z-999 hover:bg-cyan-600 bg-cyan-500 text-white p-3 rounded-full shadow-xl transition-all duration-300"
-                >
-                    <ArrowUp size={20} />
-                </button>
-            )}
-        </>
-    );
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <>
+      {visible && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-5 right-5 z-999 hover:bg-cyan-600 bg-cyan-500 text-white p-3 rounded-full shadow-xl transition-all duration-300"
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
+    </>
+  );
 }
